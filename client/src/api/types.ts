@@ -8,6 +8,9 @@ export interface Course {
   duration_minutes?: number | null;
   course_type?: string | null;
   is_completed: boolean;
+  cfu?: number | null;
+  creator_user_id?: number | null;
+  instructor_name?: string | null;
 }
 
 export interface ModuleSummary {

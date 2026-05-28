@@ -17,6 +17,14 @@ export interface CourseDetail extends Course {
   modules: ModuleList[];
 }
 
+export interface User {
+  id: number;
+  email?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  phone?: string | null;
+}
+
 export interface ModuleList {
   id: number;
   title: string;
