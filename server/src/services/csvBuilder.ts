@@ -5,7 +5,8 @@ import { limitConcurrency } from '../utils/limit';
 
 const UTF8_BOM = '﻿';
 const QUESTION_DETAIL_CONCURRENCY = 8;
-const MAX_QUESTIONS_PER_QUIZ = 500;
+const PAGE_SIZE = 100;
+const MAX_PAGES = 50;
 
 interface NormalizedQuestion {
   quizIndex: number;
@@ -13,14 +14,26 @@ interface NormalizedQuestion {
   options: Array<{ text: string; isCorrect: boolean }>;
 }
 
+async function fetchAllQuestions(quizId: number): Promise<QuizQuestion[]> {
+  const all: QuizQuestion[] = [];
+  let skip = 0;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const items = await a4uJson<QuizQuestion[]>(
+      `/quizzes/${quizId}/questions?skip=${skip}&limit=${PAGE_SIZE}`
+    );
+    all.push(...items);
+    if (items.length < PAGE_SIZE) break;
+    skip += PAGE_SIZE;
+  }
+  return all;
+}
+
 async function fetchQuestionDetail(id: number): Promise<QuizQuestionDetail> {
   return a4uJson<QuizQuestionDetail>(`/questions/${id}`);
 }
 
 async function fetchQuizQuestions(quizId: number, quizIndex: number): Promise<NormalizedQuestion[]> {
-  const list = await a4uJson<QuizQuestion[]>(
-    `/quizzes/${quizId}/questions?skip=0&limit=${MAX_QUESTIONS_PER_QUIZ}`
-  );
+  const list = await fetchAllQuestions(quizId);
   const details = await limitConcurrency(
     QUESTION_DETAIL_CONCURRENCY,
     list.map((q) => () => fetchQuestionDetail(q.id))
