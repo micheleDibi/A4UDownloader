@@ -12,6 +12,9 @@ import { logger } from './utils/logger';
 
 const app = express();
 app.disable('x-powered-by');
+if (config.isProd) {
+  app.set('trust proxy', 1);
+}
 app.use(express.json({ limit: '64kb' }));
 app.use(cookieParser());
 
