@@ -52,12 +52,29 @@ export function CourseDetailPage() {
 
       {courseQuery.data && (
         <>
-          <h1 className="mb-1 text-2xl font-semibold text-slate-800">
+          <h1 className="mb-2 text-2xl font-semibold text-slate-800">
             {courseQuery.data.title || courseQuery.data.name}
           </h1>
-          <p className="mb-6 text-sm text-slate-500">
-            {sortedModules.length} moduli
-          </p>
+          <div className="mb-6 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
+            <span>
+              <span className="text-slate-400">Docente:</span>{' '}
+              <span className="font-medium text-slate-700">
+                {courseQuery.data.instructor_name || '—'}
+              </span>
+            </span>
+            <span>
+              <span className="text-slate-400">CFU:</span>{' '}
+              <span className="font-medium text-slate-700">
+                {courseQuery.data.cfu ?? '—'}
+              </span>
+            </span>
+            <span>
+              <span className="text-slate-400">Moduli:</span>{' '}
+              <span className="font-medium text-slate-700">
+                {sortedModules.length}
+              </span>
+            </span>
+          </div>
           <div className="space-y-3">
             {sortedModules.map((m, idx) => {
               const mq = moduleQueries[idx];

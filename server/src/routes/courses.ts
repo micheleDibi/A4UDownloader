@@ -42,6 +42,14 @@ async function getInstructorMap(): Promise<Map<number, string>> {
   return map;
 }
 
+function resolveInstructorName(
+  creatorUserId: number | null | undefined,
+  map: Map<number, string>
+): string | null {
+  if (creatorUserId == null) return null;
+  return map.get(creatorUserId) ?? null;
+}
+
 coursesRouter.get('/', async (_req, res, next) => {
   try {
     const [courses, instructors] = await Promise.all([
@@ -54,10 +62,7 @@ coursesRouter.get('/', async (_req, res, next) => {
       .filter((c) => c.is_completed === true)
       .map((c) => ({
         ...c,
-        instructor_name:
-          c.creator_user_id != null
-            ? instructors.get(c.creator_user_id) ?? null
-            : null,
+        instructor_name: resolveInstructorName(c.creator_user_id, instructors),
       }));
     res.json({ courses: completed });
   } catch (e) {
@@ -67,10 +72,17 @@ coursesRouter.get('/', async (_req, res, next) => {
 
 coursesRouter.get('/:id', async (req, res, next) => {
   try {
-    const course = await a4uJson<CourseDetail>(
-      `/courses/${encodeURIComponent(req.params.id)}`
-    );
-    res.json(course);
+    const [course, instructors] = await Promise.all([
+      a4uJson<CourseDetail & { creator_user_id?: number | null }>(
+        `/courses/${encodeURIComponent(req.params.id)}`
+      ),
+      getInstructorMap().catch(() => new Map<number, string>()),
+    ]);
+    const enriched = {
+      ...course,
+      instructor_name: resolveInstructorName(course.creator_user_id, instructors),
+    };
+    res.json(enriched);
   } catch (e) {
     next(e);
   }
