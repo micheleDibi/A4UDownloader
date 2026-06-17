@@ -34,4 +34,9 @@ export const api = {
       method: 'POST',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
+  put: <T>(url: string, body?: unknown) =>
+    request<T>(url, {
+      method: 'PUT',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    }),
 };

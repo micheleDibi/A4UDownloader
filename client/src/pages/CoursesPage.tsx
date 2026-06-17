@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import type { Course } from '../api/types';
 import { Layout } from '../components/Layout';
 import { Spinner } from '../components/Spinner';
+import { StatusBadge } from '../components/StatusBadge';
 
 export function CoursesPage() {
   const { data, isLoading, error } = useQuery({
@@ -106,8 +107,11 @@ export function CoursesPage() {
                 to={`/courses/${c.id}`}
                 className="block h-full rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-400 hover:shadow"
               >
-                <div className="text-base font-medium text-slate-800">
-                  {c.title || c.name}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="text-base font-medium text-slate-800">
+                    {c.title || c.name}
+                  </div>
+                  <StatusBadge summary={c.approval_summary} />
                 </div>
                 <div className="mt-2 space-y-1 text-xs text-slate-600">
                   <div>

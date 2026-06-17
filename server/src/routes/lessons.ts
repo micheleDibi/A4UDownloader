@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { HttpError } from '../middleware/errorHandler';
-import { getLessonRecord, toPublicLesson } from '../services/db';
+import { getLessonOwnership, getLessonRecord, toPublicLesson } from '../services/db';
+import { setApproval } from '../services/approvalsDb';
+import { isAssetType, isStatus, parseNote } from '../utils/approvals';
 import { streamMedia } from '../services/media';
 import { buildQuizCsv } from '../services/csvBuilder';
 import { streamLessonZip } from '../services/zipBuilder';
@@ -75,6 +77,34 @@ lessonsRouter.get('/:id/all.zip', async (req, res, next) => {
     const lesson = await getLessonRecord(req.params.id);
     if (!lesson) throw new HttpError(404, { error: 'not_found' });
     await streamLessonZip(req, res, lesson);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Approvazione del singolo asset (dispensa o slides) di una lezione.
+lessonsRouter.put('/:id/approvals/:assetType', async (req, res, next) => {
+  try {
+    const assetType = req.params.assetType;
+    if (!isAssetType(assetType)) {
+      throw new HttpError(400, { error: 'invalid_asset_type' });
+    }
+    const status = req.body?.status;
+    if (!isStatus(status)) throw new HttpError(400, { error: 'invalid_status' });
+    const own = await getLessonOwnership(req.params.id);
+    if (!own) throw new HttpError(404, { error: 'not_found' });
+    if (own.is_assessment) {
+      throw new HttpError(400, { error: 'assessment_not_approvable' });
+    }
+    setApproval({
+      lesson_id: own.id,
+      asset_type: assetType,
+      course_id: own.course_id,
+      module_id: own.module_id,
+      status,
+      note: parseNote(req.body?.note),
+    });
+    res.json({ ok: true });
   } catch (e) {
     next(e);
   }

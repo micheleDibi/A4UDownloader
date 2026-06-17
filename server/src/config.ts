@@ -18,6 +18,8 @@ export const config = {
   mediaBaseUrl: required('MEDIA_BASE_URL').replace(/\/$/, ''),
   // Nome dell'organizzazione di cui mostrare i corsi.
   orgName: process.env.A4U_ORG_NAME || 'SSML',
+  // File SQLite locale per lo stato delle approvazioni (creato al boot).
+  approvalsDbPath: process.env.APPROVALS_DB_PATH || './data/approvals.db',
   authUsername: required('AUTH_USERNAME'),
   authPassword: required('AUTH_PASSWORD'),
   jwtSecret: required('JWT_SECRET'),

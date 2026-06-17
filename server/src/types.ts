@@ -9,6 +9,7 @@ export interface Course {
   is_completed: boolean;
   cfu?: number | null;
   instructor_name?: string | null;
+  approval_summary?: ApprovalSummary;
 }
 
 export interface ModuleSummary {
@@ -58,4 +59,25 @@ export interface AssessmentOpenQuestion {
 export interface LessonAssessmentContent {
   multiple_choice_questions?: AssessmentMCQuestion[];
   open_questions?: AssessmentOpenQuestion[];
+}
+
+// --- Approvazioni (DB locale del downloader) ---
+export type AssetType = 'dispensa' | 'slides';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+// Stato realmente persistito (pending = riga assente).
+export type StoredApprovalStatus = 'approved' | 'rejected';
+
+export interface Approval {
+  lesson_id: string;
+  asset_type: AssetType;
+  status: StoredApprovalStatus;
+  note: string | null;
+  updated_at: string;
+}
+
+export interface ApprovalSummary {
+  total: number;
+  approved: number;
+  rejected: number;
+  pending: number;
 }

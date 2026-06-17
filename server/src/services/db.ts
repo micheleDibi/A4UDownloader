@@ -38,7 +38,8 @@ const COURSE_SELECT = `
          c.language_code,
          c.lesson_duration_minutes,
          u.full_name AS instructor_name,
-         COUNT(cl.id)::int AS lessons_count
+         COUNT(cl.id)::int AS lessons_count,
+         COUNT(*) FILTER (WHERE NOT cl.is_assessment)::int AS content_lessons_count
   FROM course c
   JOIN organizations o ON o.id = c.organization_id AND o.name = $1
   LEFT JOIN users u ON u.id = c.assignee_user_id
@@ -66,6 +67,13 @@ interface CourseRow {
   lesson_duration_minutes: number | null;
   instructor_name: string | null;
   lessons_count: number;
+  content_lessons_count: number;
+}
+
+// Course + numero di lezioni di contenuto (per il riepilogo approvazioni:
+// asset totali = content_lessons_count × 2).
+export interface CourseWithMeta extends Course {
+  content_lessons_count: number;
 }
 
 function mapCourse(row: CourseRow): Course {
@@ -85,12 +93,15 @@ function mapCourse(row: CourseRow): Course {
   };
 }
 
-export async function listCompleteCourses(): Promise<Course[]> {
+export async function listCompleteCourses(): Promise<CourseWithMeta[]> {
   const res = await pool.query<CourseRow>(
     `${COURSE_SELECT}${COURSE_GROUP} ORDER BY c.title`,
     [config.orgName]
   );
-  return res.rows.map(mapCourse);
+  return res.rows.map((r) => ({
+    ...mapCourse(r),
+    content_lessons_count: r.content_lessons_count,
+  }));
 }
 
 export async function getCourseDetail(id: string): Promise<CourseDetail | null> {
@@ -205,4 +216,52 @@ export async function getModuleDetail(id: string): Promise<ModuleDetail | null> 
     order: mod.position,
     lessons: mod.lessons.map(toPublicLesson),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Helper per le approvazioni: elenco lezioni di CONTENUTO (no assessment) e
+// proprietà di una lezione. Usati per le azioni massive e per i totali.
+// ---------------------------------------------------------------------------
+export async function getCourseContentLessons(
+  courseId: string
+): Promise<Array<{ id: string; module_id: string }>> {
+  if (!isUuid(courseId)) return [];
+  const res = await pool.query<{ id: string; module_id: string }>(
+    `SELECT id::text AS id, module_id::text AS module_id
+     FROM course_lesson WHERE course_id = $1 AND is_assessment = false`,
+    [courseId]
+  );
+  return res.rows;
+}
+
+export async function getModuleContentLessons(
+  moduleId: string
+): Promise<Array<{ id: string; course_id: string }>> {
+  if (!isUuid(moduleId)) return [];
+  const res = await pool.query<{ id: string; course_id: string }>(
+    `SELECT id::text AS id, course_id::text AS course_id
+     FROM course_lesson WHERE module_id = $1 AND is_assessment = false`,
+    [moduleId]
+  );
+  return res.rows;
+}
+
+export interface LessonOwnership {
+  id: string;
+  course_id: string;
+  module_id: string;
+  is_assessment: boolean;
+}
+
+export async function getLessonOwnership(
+  lessonId: string
+): Promise<LessonOwnership | null> {
+  if (!isUuid(lessonId)) return null;
+  const res = await pool.query<LessonOwnership>(
+    `SELECT id::text AS id, course_id::text AS course_id,
+            module_id::text AS module_id, is_assessment
+     FROM course_lesson WHERE id = $1`,
+    [lessonId]
+  );
+  return res.rows[0] ?? null;
 }

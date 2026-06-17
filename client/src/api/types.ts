@@ -9,6 +9,31 @@ export interface Course {
   is_completed: boolean;
   cfu?: number | null;
   instructor_name?: string | null;
+  approval_summary?: ApprovalSummary;
+}
+
+// --- Approvazioni ---
+export type AssetType = 'dispensa' | 'slides';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+
+export interface Approval {
+  lesson_id: string;
+  asset_type: AssetType;
+  status: 'approved' | 'rejected';
+  note: string | null;
+  updated_at: string;
+}
+
+export interface ApprovalSummary {
+  total: number;
+  approved: number;
+  rejected: number;
+  pending: number;
+}
+
+export interface CourseApprovals {
+  approvals: Approval[];
+  summary: ApprovalSummary;
 }
 
 export interface ModuleSummary {

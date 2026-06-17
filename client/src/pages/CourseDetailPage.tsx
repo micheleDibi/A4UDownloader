@@ -6,6 +6,9 @@ import type { CourseDetail, ModuleDetail, ModuleSummary } from '../api/types';
 import { Layout } from '../components/Layout';
 import { Spinner } from '../components/Spinner';
 import { ModuleAccordion } from '../components/ModuleAccordion';
+import { ApprovalProgress } from '../components/ApprovalProgress';
+import { BulkApprovalButtons } from '../components/BulkApprovalButtons';
+import { useApprovals } from '../hooks/useApprovals';
 
 export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +17,8 @@ export function CourseDetailPage() {
     queryFn: () => api.get<CourseDetail>(`/api/courses/${id}`),
     enabled: !!id,
   });
+
+  const approvals = useApprovals(id);
 
   const sortedModules: ModuleSummary[] = useMemo(
     () =>
@@ -75,6 +80,28 @@ export function CourseDetailPage() {
               </span>
             </span>
           </div>
+
+          {approvals.summary && approvals.summary.total > 0 && (
+            <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-slate-700">
+                  Stato valutazione
+                </h2>
+                <BulkApprovalButtons
+                  scopeLabel="l'intero corso"
+                  disabled={approvals.busy}
+                  onApprove={(note) =>
+                    approvals.setCourse.mutate({ status: 'approved', note })
+                  }
+                  onReject={(note) =>
+                    approvals.setCourse.mutate({ status: 'rejected', note })
+                  }
+                />
+              </div>
+              <ApprovalProgress summary={approvals.summary} className="mt-3" />
+            </div>
+          )}
+
           <div className="space-y-3">
             {sortedModules.map((m, idx) => {
               const mq = moduleQueries[idx];
@@ -85,6 +112,14 @@ export function CourseDetailPage() {
                   detail={mq?.data}
                   isLoading={!!mq?.isLoading}
                   isError={!!mq?.error}
+                  getState={approvals.getState}
+                  busy={approvals.busy}
+                  onSetAsset={(lessonId, assetType, status, note) =>
+                    approvals.setAsset.mutate({ lessonId, assetType, status, note })
+                  }
+                  onSetModule={(moduleId, status, note) =>
+                    approvals.setModule.mutate({ moduleId, status, note })
+                  }
                 />
               );
             })}
