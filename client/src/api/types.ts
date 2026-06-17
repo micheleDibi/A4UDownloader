@@ -1,22 +1,19 @@
 export type LessonType = 'CONTENT' | 'ASSESSMENT' | (string & {});
 
 export interface Course {
-  id: number;
+  id: string;
   name: string;
   title?: string | null;
   language?: string | null;
   duration_minutes?: number | null;
-  course_type?: string | null;
   is_completed: boolean;
   cfu?: number | null;
-  creator_user_id?: number | null;
   instructor_name?: string | null;
 }
 
 export interface ModuleSummary {
-  id: number;
+  id: string;
   title: string;
-  duration_minutes?: number | null;
   order?: number | null;
 }
 
@@ -25,14 +22,13 @@ export interface CourseDetail extends Course {
 }
 
 export interface Lesson {
-  id: number;
+  id: string;
   title: string;
   lesson_type?: LessonType | null;
-  duration_minutes?: number | null;
   order?: number | null;
-  slides_pdf_url?: string | null;
-  slides_and_audio_video_url?: string | null;
-  slides_and_avatar_video_url?: string | null;
+  is_assessment?: boolean;
+  dispensa_available?: boolean;
+  slides_available?: boolean;
 }
 
 export interface ModuleDetail extends ModuleSummary {

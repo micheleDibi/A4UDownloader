@@ -32,27 +32,15 @@ export function LessonRow({ lesson, index }: Props) {
           <>
             <DownloadButton
               href={`/api/lessons/${lesson.id}/pdf`}
-              label="PDF"
-              enabled
-              title="Scarica PDF della lezione"
+              label="Dispensa"
+              enabled={lesson.dispensa_available !== false}
+              title="Scarica la dispensa (PDF)"
             />
             <DownloadButton
               href={`/api/lessons/${lesson.id}/file?kind=slides`}
               label="Slides"
-              enabled={!!lesson.slides_pdf_url}
-              title="Scarica le slide della lezione"
-            />
-            <DownloadButton
-              href={`/api/lessons/${lesson.id}/file?kind=video`}
-              label="Video"
-              enabled={!!lesson.slides_and_audio_video_url}
-              title="Scarica il video con audio"
-            />
-            <DownloadButton
-              href={`/api/lessons/${lesson.id}/file?kind=avatar`}
-              label="Video avatar"
-              enabled={!!lesson.slides_and_avatar_video_url}
-              title="Scarica il video con avatar"
+              enabled={!!lesson.slides_available}
+              title="Scarica le slide (PDF)"
             />
           </>
         )}

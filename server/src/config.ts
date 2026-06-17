@@ -12,8 +12,12 @@ function required(name: string): string {
 }
 
 export const config = {
-  a4uBaseUrl: required('A4U_API_BASE_URL').replace(/\/$/, ''),
-  a4uApiKey: required('A4U_API_KEY'),
+  // Connessione al PostgreSQL locale della piattaforma a4u (sola lettura).
+  databaseUrl: required('DATABASE_URL'),
+  // Base URL pubblica da cui OVH serve i PDF (= OVH_PUBLIC_BASE_URL di a4u).
+  mediaBaseUrl: required('MEDIA_BASE_URL').replace(/\/$/, ''),
+  // Nome dell'organizzazione di cui mostrare i corsi.
+  orgName: process.env.A4U_ORG_NAME || 'SSML',
   authUsername: required('AUTH_USERNAME'),
   authPassword: required('AUTH_PASSWORD'),
   jwtSecret: required('JWT_SECRET'),

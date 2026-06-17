@@ -86,7 +86,7 @@ export function CoursesPage() {
 
       {error && (
         <div className="rounded-md bg-red-50 px-4 py-3 text-red-700">
-          Errore caricamento corsi. Verifica le credenziali API in <code>.env</code>.
+          Errore caricamento corsi. Verifica la connessione al database in <code>.env</code>.
         </div>
       )}
 
