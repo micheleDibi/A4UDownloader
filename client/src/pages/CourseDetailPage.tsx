@@ -1,6 +1,14 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Award,
+  ClipboardCheck,
+  Layers,
+  User,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { api } from '../api/client';
 import type { CourseDetail, ModuleDetail, ModuleSummary } from '../api/types';
 import { Layout } from '../components/Layout';
@@ -9,6 +17,21 @@ import { ModuleAccordion } from '../components/ModuleAccordion';
 import { ApprovalProgress } from '../components/ApprovalProgress';
 import { BulkApprovalButtons } from '../components/BulkApprovalButtons';
 import { useApprovals } from '../hooks/useApprovals';
+
+function Chip({
+  icon: Icon,
+  children,
+}: {
+  icon: LucideIcon;
+  children: ReactNode;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 shadow-card">
+      <Icon className="h-3.5 w-3.5 text-slate-400" />
+      {children}
+    </span>
+  );
+}
 
 export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,53 +61,43 @@ export function CourseDetailPage() {
   return (
     <Layout>
       <div className="mb-4">
-        <Link to="/courses" className="text-sm text-slate-600 hover:text-slate-900">
-          ← Tutti i corsi
+        <Link
+          to="/courses"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-brand-700"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Tutti i corsi
         </Link>
       </div>
 
       {courseQuery.isLoading && (
-        <div className="flex justify-center py-12">
+        <div className="flex justify-center py-16">
           <Spinner />
         </div>
       )}
 
       {courseQuery.error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
           Errore caricamento corso.
         </div>
       )}
 
       {courseQuery.data && (
         <>
-          <h1 className="mb-2 text-2xl font-semibold text-slate-800">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
             {courseQuery.data.title || courseQuery.data.name}
           </h1>
-          <div className="mb-6 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
-            <span>
-              <span className="text-slate-400">Docente:</span>{' '}
-              <span className="font-medium text-slate-700">
-                {courseQuery.data.instructor_name || '—'}
-              </span>
-            </span>
-            <span>
-              <span className="text-slate-400">CFU:</span>{' '}
-              <span className="font-medium text-slate-700">
-                {courseQuery.data.cfu ?? '—'}
-              </span>
-            </span>
-            <span>
-              <span className="text-slate-400">Moduli:</span>{' '}
-              <span className="font-medium text-slate-700">
-                {sortedModules.length}
-              </span>
-            </span>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Chip icon={User}>{courseQuery.data.instructor_name || '—'}</Chip>
+            <Chip icon={Award}>{courseQuery.data.cfu ?? '—'} CFU</Chip>
+            <Chip icon={Layers}>{sortedModules.length} moduli</Chip>
           </div>
 
           {approvals.summary && approvals.summary.total > 0 && (
-            <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-card sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-sm font-semibold text-slate-700">
+                <h2 className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <ClipboardCheck className="h-4 w-4 text-brand-600" />
                   Stato valutazione
                 </h2>
                 <BulkApprovalButtons
@@ -98,11 +111,11 @@ export function CourseDetailPage() {
                   }
                 />
               </div>
-              <ApprovalProgress summary={approvals.summary} className="mt-3" />
+              <ApprovalProgress summary={approvals.summary} className="mt-4" />
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="mt-6 space-y-3">
             {sortedModules.map((m, idx) => {
               const mq = moduleQueries[idx];
               return (

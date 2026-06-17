@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Check, X } from 'lucide-react';
 import type { ApprovalStatus } from '../api/types';
 import type { AssetState } from '../hooks/useApprovals';
 import { RejectNotePopover } from './RejectNotePopover';
@@ -15,13 +16,13 @@ export function ApprovalControl({ state, disabled, onSet }: Props) {
   const rejected = state.status === 'rejected';
 
   const base =
-    'inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50';
+    'inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50';
   const approveCls = approved
-    ? 'border-emerald-500 bg-emerald-500 text-white'
-    : 'border-slate-300 bg-white text-slate-600 hover:border-emerald-400 hover:text-emerald-700';
+    ? 'border-emerald-700 bg-emerald-700 text-white shadow-sm'
+    : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:text-emerald-700';
   const rejectCls = rejected
-    ? 'border-red-500 bg-red-500 text-white'
-    : 'border-slate-300 bg-white text-slate-600 hover:border-red-400 hover:text-red-700';
+    ? 'border-red-600 bg-red-600 text-white shadow-sm'
+    : 'border-slate-200 bg-white text-slate-500 hover:border-red-300 hover:text-red-700';
 
   return (
     <div className="relative flex items-center gap-1.5">
@@ -36,7 +37,8 @@ export function ApprovalControl({ state, disabled, onSet }: Props) {
         }}
         className={`${base} ${approveCls}`}
       >
-        ✓ Approva
+        <Check className="h-3.5 w-3.5" />
+        Approva
       </button>
       <button
         type="button"
@@ -49,17 +51,9 @@ export function ApprovalControl({ state, disabled, onSet }: Props) {
         }}
         className={`${base} ${rejectCls}`}
       >
-        ✗ Rifiuta
+        <X className="h-3.5 w-3.5" />
+        Rifiuta
       </button>
-      {rejected && state.note && (
-        <span
-          title={state.note}
-          aria-label={`Motivazione: ${state.note}`}
-          className="cursor-help select-none text-amber-500"
-        >
-          ⓘ
-        </span>
-      )}
       {rejecting && (
         <RejectNotePopover
           initialNote={state.note}

@@ -11,7 +11,7 @@ const SIZES = {
 export function Spinner({ size = 'md' }: Props) {
   return (
     <div
-      className={`inline-block animate-spin rounded-full border-slate-200 border-t-slate-700 ${SIZES[size]}`}
+      className={`inline-block animate-spin rounded-full border-slate-200 border-t-brand-600 ${SIZES[size]}`}
       role="status"
       aria-label="caricamento"
     />

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Ban, CheckCheck } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
 
 interface Props {
@@ -17,26 +18,28 @@ export function BulkApprovalButtons({
   onReject,
 }: Props) {
   const [dialog, setDialog] = useState<null | 'approve' | 'reject'>(null);
-  const btn =
-    size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm';
+  const sizeCls = size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm';
+  const iconCls = size === 'sm' ? 'h-3.5 w-3.5' : 'h-4 w-4';
 
   return (
     <>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           disabled={disabled}
           onClick={() => setDialog('approve')}
-          className={`rounded-md border border-emerald-300 bg-emerald-50 font-medium text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50 ${btn}`}
+          className={`inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 font-medium text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50 ${sizeCls}`}
         >
+          <CheckCheck className={iconCls} />
           Approva tutto
         </button>
         <button
           type="button"
           disabled={disabled}
           onClick={() => setDialog('reject')}
-          className={`rounded-md border border-red-300 bg-red-50 font-medium text-red-800 transition hover:bg-red-100 disabled:opacity-50 ${btn}`}
+          className={`inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 font-medium text-red-800 transition hover:bg-red-100 disabled:opacity-50 ${sizeCls}`}
         >
+          <Ban className={iconCls} />
           Rifiuta tutto
         </button>
       </div>

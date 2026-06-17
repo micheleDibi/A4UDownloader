@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronDown, FolderArchive } from 'lucide-react';
 import type {
   ApprovalStatus,
   AssetType,
@@ -60,21 +61,23 @@ export function ModuleAccordion({
   const summary = { total, approved, rejected, pending: total - approved - rejected };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-card">
       <div className="px-4 py-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="flex flex-1 items-center gap-2 text-left text-slate-800 transition hover:text-slate-900"
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
           >
-            <span className="inline-block w-3 text-slate-500">
-              {open ? '▾' : '▸'}
-            </span>
-            <span className="font-medium">{m.title}</span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+                open ? 'rotate-0' : '-rotate-90'
+              }`}
+            />
+            <span className="truncate font-semibold text-slate-800">{m.title}</span>
             {detail && (
-              <span className="text-xs text-slate-500">
-                ({detail.lessons.length} lezioni)
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                {detail.lessons.length} lezioni
               </span>
             )}
             {isLoading && <Spinner size="sm" />}
@@ -92,10 +95,11 @@ export function ModuleAccordion({
             <a
               href={`/api/modules/${m.id}/all.zip`}
               download
-              className="rounded-md border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
               title="Scarica tutto il modulo come ZIP"
             >
-              ZIP modulo
+              <FolderArchive className="h-3.5 w-3.5" />
+              ZIP
             </a>
           </div>
         </div>
@@ -103,9 +107,9 @@ export function ModuleAccordion({
       </div>
 
       {open && (
-        <div className="border-t border-slate-200 px-4 py-3">
+        <div className="rounded-b-xl border-t border-slate-200 bg-slate-50/50 px-4 py-3">
           {isError && (
-            <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               Errore nel caricare le lezioni di questo modulo.
             </div>
           )}
@@ -115,7 +119,7 @@ export function ModuleAccordion({
             </p>
           )}
           {!isError && lessons.length > 0 && (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-slate-200/70">
               {lessons.map((l, i) => (
                 <li key={l.id}>
                   <LessonRow

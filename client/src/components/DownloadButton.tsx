@@ -1,3 +1,5 @@
+import { Download } from 'lucide-react';
+
 interface Props {
   href: string;
   label: string;
@@ -14,22 +16,37 @@ export function DownloadButton({
   title,
 }: Props) {
   const base =
-    'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition';
+    'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition';
   const enabledCls =
     variant === 'secondary'
-      ? 'border border-slate-300 bg-slate-100 text-slate-800 hover:bg-slate-200'
-      : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50';
+      ? 'border border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
+      : 'border border-brand-200 bg-brand-50 text-brand-700 hover:border-brand-300 hover:bg-brand-100';
   const disabledCls =
     'cursor-not-allowed border border-slate-200 bg-slate-50 text-slate-400';
+
   if (!enabled) {
     return (
-      <span className={`${base} ${disabledCls}`} title="File non disponibile">
+      <button
+        type="button"
+        disabled
+        aria-disabled="true"
+        aria-label={`${label} — file non disponibile`}
+        title="File non disponibile"
+        className={`${base} ${disabledCls}`}
+      >
+        <Download className="h-3.5 w-3.5" aria-hidden="true" />
         {label}
-      </span>
+      </button>
     );
   }
   return (
-    <a href={href} download className={`${base} ${enabledCls}`} title={title ?? label}>
+    <a
+      href={href}
+      download
+      className={`${base} ${enabledCls}`}
+      title={title ?? label}
+    >
+      <Download className="h-3.5 w-3.5" aria-hidden="true" />
       {label}
     </a>
   );
