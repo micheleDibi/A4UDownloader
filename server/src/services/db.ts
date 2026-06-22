@@ -144,13 +144,19 @@ export interface LessonRecord {
   slides_pdf_path: string | null;
   content_status: string;
   content_raw: LessonAssessmentContent | null;
+  video_status: string;
+  video_path: string | null;
+  avatar_video_status: string;
+  avatar_video_path: string | null;
 }
 
 const LESSON_RECORD_COLS = `
   cl.id::text AS id, cl.title, cl.position, cl.is_assessment,
   cl.pdf_status, cl.pdf_path,
   cl.slides_pdf_status, cl.slides_pdf_path,
-  cl.content_status, cl.content_raw`;
+  cl.content_status, cl.content_raw,
+  cl.video_status, cl.video_path,
+  cl.avatar_video_status, cl.avatar_video_path`;
 
 export function toPublicLesson(r: LessonRecord): Lesson {
   return {
@@ -161,6 +167,9 @@ export function toPublicLesson(r: LessonRecord): Lesson {
     is_assessment: r.is_assessment,
     dispensa_available: r.pdf_status === 'ready' && !!r.pdf_path,
     slides_available: r.slides_pdf_status === 'ready' && !!r.slides_pdf_path,
+    video_available: r.video_status === 'ready' && !!r.video_path,
+    avatar_video_available:
+      r.avatar_video_status === 'ready' && !!r.avatar_video_path,
   };
 }
 

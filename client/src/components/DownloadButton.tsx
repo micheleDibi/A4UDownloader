@@ -1,4 +1,5 @@
 import { Download } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface Props {
   href: string;
@@ -6,6 +7,7 @@ interface Props {
   enabled: boolean;
   variant?: 'primary' | 'secondary';
   title?: string;
+  icon?: LucideIcon;
 }
 
 export function DownloadButton({
@@ -14,6 +16,7 @@ export function DownloadButton({
   enabled,
   variant = 'primary',
   title,
+  icon: Icon = Download,
 }: Props) {
   const base =
     'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition';
@@ -34,7 +37,7 @@ export function DownloadButton({
         title="File non disponibile"
         className={`${base} ${disabledCls}`}
       >
-        <Download className="h-3.5 w-3.5" aria-hidden="true" />
+        <Icon className="h-3.5 w-3.5" aria-hidden="true" />
         {label}
       </button>
     );

@@ -18,8 +18,8 @@ function normalizeSegments(rel: string): string {
   return parts.join('/');
 }
 
-// Replica di `pdf_key`: i path su DB (`{org}/{course}/{lesson}.pdf`) vivono
-// sotto il namespace `generated_pdfs/`.
+// Replica di `pdf_key`: i PDF (`{org}/{course}/{lesson}.pdf`) vivono sotto il
+// namespace `generated_pdfs/`.
 export function pdfKey(rel: string): string {
   let r = normalizeSegments(rel);
   if (r.startsWith('generated_pdfs/')) {
@@ -28,13 +28,22 @@ export function pdfKey(rel: string): string {
   return r ? `generated_pdfs/${r}` : 'generated_pdfs';
 }
 
+// Replica di `uploads_key`: i file caricati/generati non-PDF (es. i video
+// `lesson_videos/...` e `lesson_avatar_videos/...`) vivono sotto `uploads/`.
+export function uploadsKey(rel: string): string {
+  let r = normalizeSegments(rel);
+  if (r.startsWith('uploads/')) r = r.slice('uploads/'.length);
+  else if (r === 'uploads') r = '';
+  return r ? `uploads/${r}` : 'uploads';
+}
+
 export function mediaUrl(key: string): string {
   return `${config.mediaBaseUrl}/${key}`;
 }
 
-// Apre un file dallo storage OVH per lo ZIP. null se non raggiungibile.
-export async function openMedia(rel: string): Promise<Readable | null> {
-  const url = mediaUrl(pdfKey(rel));
+// Apre una key dallo storage OVH per lo ZIP. null se non raggiungibile.
+async function openKey(key: string): Promise<Readable | null> {
+  const url = mediaUrl(key);
   try {
     const r = await fetch(url);
     if (!r.ok || !r.body) {
@@ -48,13 +57,17 @@ export async function openMedia(rel: string): Promise<Readable | null> {
   }
 }
 
-// Proxy/stream di un PDF verso il client con un nome file leggibile.
-export async function streamMedia(
+export const openPdf = (rel: string) => openKey(pdfKey(rel));
+export const openUpload = (rel: string) => openKey(uploadsKey(rel));
+
+// Proxy/stream di una key verso il client con un nome file leggibile.
+async function streamKey(
   res: Response,
-  rel: string,
-  filename: string
+  key: string,
+  filename: string,
+  fallbackType: string
 ): Promise<void> {
-  const url = mediaUrl(pdfKey(rel));
+  const url = mediaUrl(key);
   let upstream: Awaited<ReturnType<typeof fetch>>;
   try {
     upstream = await fetch(url);
@@ -69,10 +82,16 @@ export async function streamMedia(
   }
   res.setHeader(
     'Content-Type',
-    upstream.headers.get('content-type') || 'application/pdf'
+    upstream.headers.get('content-type') || fallbackType
   );
   res.setHeader('Content-Disposition', contentDisposition(filename));
   const len = upstream.headers.get('content-length');
   if (len) res.setHeader('Content-Length', len);
   Readable.fromWeb(upstream.body as never).pipe(res);
 }
+
+export const streamPdf = (res: Response, rel: string, filename: string) =>
+  streamKey(res, pdfKey(rel), filename, 'application/pdf');
+
+export const streamUpload = (res: Response, rel: string, filename: string) =>
+  streamKey(res, uploadsKey(rel), filename, 'application/octet-stream');

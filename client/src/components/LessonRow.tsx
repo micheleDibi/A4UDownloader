@@ -1,4 +1,4 @@
-import { AlertCircle, FileText, Presentation } from 'lucide-react';
+import { AlertCircle, Clapperboard, FileText, Presentation, Video } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ApprovalStatus, AssetType, Lesson } from '../api/types';
 import type { AssetState } from '../hooks/useApprovals';
@@ -125,6 +125,24 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
               href={`/api/lessons/${lesson.id}/quiz.csv`}
               label="CSV quiz"
               enabled
+            />
+          )}
+          {!isAssessment && lesson.video_available && (
+            <DownloadButton
+              href={`/api/lessons/${lesson.id}/file?kind=video`}
+              label="Video"
+              icon={Video}
+              enabled
+              title="Scarica il video della lezione (MP4)"
+            />
+          )}
+          {!isAssessment && lesson.avatar_video_available && (
+            <DownloadButton
+              href={`/api/lessons/${lesson.id}/file?kind=avatar`}
+              label="Video avatar"
+              icon={Clapperboard}
+              enabled
+              title="Scarica il video con avatar (MP4)"
             />
           )}
           <DownloadButton

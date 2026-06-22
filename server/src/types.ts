@@ -30,6 +30,8 @@ export interface Lesson {
   is_assessment: boolean;
   dispensa_available: boolean;
   slides_available: boolean;
+  video_available: boolean;
+  avatar_video_available: boolean;
 }
 
 export interface ModuleDetail extends ModuleSummary {

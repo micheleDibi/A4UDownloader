@@ -4,13 +4,14 @@ import { Readable } from 'node:stream';
 import { contentDisposition } from '../utils/contentDisposition';
 import { ordinalPrefix, slugify } from '../utils/slugify';
 import { buildQuizCsv } from './csvBuilder';
-import { openMedia } from './media';
+import { openPdf, openUpload } from './media';
 import type { LessonRecord, ModuleWithRecords } from './db';
 import { logger } from '../utils/logger';
 
 interface FileTarget {
   name: string;
   rel: string;
+  source: 'pdf' | 'upload';
 }
 
 function lessonContentTargets(
@@ -19,10 +20,32 @@ function lessonContentTargets(
 ): FileTarget[] {
   const targets: FileTarget[] = [];
   if (lesson.pdf_status === 'ready' && lesson.pdf_path) {
-    targets.push({ name: `${folderPrefix}01-dispensa.pdf`, rel: lesson.pdf_path });
+    targets.push({
+      name: `${folderPrefix}01-dispensa.pdf`,
+      rel: lesson.pdf_path,
+      source: 'pdf',
+    });
   }
   if (lesson.slides_pdf_status === 'ready' && lesson.slides_pdf_path) {
-    targets.push({ name: `${folderPrefix}02-slides.pdf`, rel: lesson.slides_pdf_path });
+    targets.push({
+      name: `${folderPrefix}02-slides.pdf`,
+      rel: lesson.slides_pdf_path,
+      source: 'pdf',
+    });
+  }
+  if (lesson.video_status === 'ready' && lesson.video_path) {
+    targets.push({
+      name: `${folderPrefix}03-video.mp4`,
+      rel: lesson.video_path,
+      source: 'upload',
+    });
+  }
+  if (lesson.avatar_video_status === 'ready' && lesson.avatar_video_path) {
+    targets.push({
+      name: `${folderPrefix}04-video-avatar.mp4`,
+      rel: lesson.avatar_video_path,
+      source: 'upload',
+    });
   }
   return targets;
 }
@@ -99,7 +122,8 @@ async function appendLessonContent(
   }
   const targets = lessonContentTargets(lesson, folderPrefix);
   for (const t of targets) {
-    const source = await openMedia(t.rel);
+    const source =
+      t.source === 'pdf' ? await openPdf(t.rel) : await openUpload(t.rel);
     if (!source) {
       skipped.push(t.name);
       continue;
