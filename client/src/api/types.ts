@@ -13,7 +13,7 @@ export interface Course {
 }
 
 // --- Approvazioni ---
-export type AssetType = 'dispensa' | 'slides';
+export type AssetType = 'dispensa' | 'slides' | 'video' | 'avatar';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Approval {

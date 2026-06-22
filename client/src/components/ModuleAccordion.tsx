@@ -48,11 +48,15 @@ export function ModuleAccordion({
     : [];
 
   const contentLessons = lessons.filter((l) => l.lesson_type !== 'ASSESSMENT');
-  const total = contentLessons.length * 2;
+  let total = 0;
   let approved = 0;
   let rejected = 0;
   for (const l of contentLessons) {
-    for (const at of ['dispensa', 'slides'] as AssetType[]) {
+    const types: AssetType[] = ['dispensa', 'slides'];
+    if (l.video_available) types.push('video');
+    if (l.avatar_video_available) types.push('avatar');
+    total += types.length;
+    for (const at of types) {
       const s = getState(l.id, at).status;
       if (s === 'approved') approved++;
       else if (s === 'rejected') rejected++;

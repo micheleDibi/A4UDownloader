@@ -64,7 +64,7 @@ export interface LessonAssessmentContent {
 }
 
 // --- Approvazioni (DB locale del downloader) ---
-export type AssetType = 'dispensa' | 'slides';
+export type AssetType = 'dispensa' | 'slides' | 'video' | 'avatar';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 // Stato realmente persistito (pending = riga assente).
 export type StoredApprovalStatus = 'approved' | 'rejected';

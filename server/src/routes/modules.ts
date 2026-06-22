@@ -7,7 +7,7 @@ import {
   getModuleWithRecords,
 } from '../services/db';
 import { bulkSet } from '../services/approvalsDb';
-import { isStatus, parseNote } from '../utils/approvals';
+import { approvableAssetTypes, isStatus, parseNote } from '../utils/approvals';
 import { streamModuleZip } from '../services/zipBuilder';
 
 export const modulesRouter = Router();
@@ -42,7 +42,11 @@ modulesRouter.post('/:id/approvals', async (req, res, next) => {
     if (lessons.length === 0) throw new HttpError(404, { error: 'not_found' });
     const courseId = lessons[0]!.course_id;
     bulkSet(
-      lessons.map((l) => ({ lesson_id: l.id, module_id: req.params.id })),
+      lessons.map((l) => ({
+        lesson_id: l.id,
+        module_id: req.params.id,
+        asset_types: approvableAssetTypes(l),
+      })),
       courseId,
       status,
       parseNote(req.body?.note)

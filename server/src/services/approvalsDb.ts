@@ -15,20 +15,47 @@ fs.mkdirSync(path.dirname(dbFile), { recursive: true });
 const db = new Database(dbFile);
 db.pragma('journal_mode = WAL');
 
-db.exec(`
+// Schema corrente: nessun CHECK su `asset_type` (validato a livello app), così
+// l'aggiunta di nuovi tipi (video, avatar) non richiede nuove migrazioni.
+const CREATE_TABLE_SQL = `
   CREATE TABLE IF NOT EXISTS asset_approval (
     lesson_id   TEXT NOT NULL,
-    asset_type  TEXT NOT NULL CHECK (asset_type IN ('dispensa','slides')),
+    asset_type  TEXT NOT NULL,
     course_id   TEXT NOT NULL,
     module_id   TEXT NOT NULL,
     status      TEXT NOT NULL CHECK (status IN ('approved','rejected')),
     note        TEXT,
     updated_at  TEXT NOT NULL,
     PRIMARY KEY (lesson_id, asset_type)
-  );
+  )`;
+const CREATE_INDEX_SQL = `
   CREATE INDEX IF NOT EXISTS ix_asset_approval_course ON asset_approval(course_id);
   CREATE INDEX IF NOT EXISTS ix_asset_approval_module ON asset_approval(module_id);
-`);
+`;
+
+// Migrazione: lo schema iniziale vincolava asset_type a ('dispensa','slides').
+// Per consentire i tipi video/avatar ricostruiamo la tabella senza quel CHECK,
+// preservando i dati esistenti.
+const legacy = db
+  .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='asset_approval'")
+  .get() as { sql: string } | undefined;
+if (legacy && legacy.sql.includes("'dispensa'")) {
+  const migrate = db.transaction(() => {
+    db.exec('ALTER TABLE asset_approval RENAME TO asset_approval_legacy');
+    db.exec(CREATE_TABLE_SQL);
+    db.exec(
+      `INSERT INTO asset_approval
+         (lesson_id, asset_type, course_id, module_id, status, note, updated_at)
+       SELECT lesson_id, asset_type, course_id, module_id, status, note, updated_at
+       FROM asset_approval_legacy`
+    );
+    db.exec('DROP TABLE asset_approval_legacy');
+  });
+  migrate();
+}
+
+db.exec(CREATE_TABLE_SQL);
+db.exec(CREATE_INDEX_SQL);
 
 interface ApprovalRowDb {
   lesson_id: string;
@@ -98,10 +125,12 @@ export function setApproval(input: SetApprovalInput): void {
 export interface BulkAsset {
   lesson_id: string;
   module_id: string;
+  // Tipi di asset da impostare per questa lezione (dispensa+slide e, se
+  // presenti, video/avatar).
+  asset_types: AssetType[];
 }
 
-// Imposta lo stato (combinato dispensa+slides) su tutti gli asset passati,
-// in un'unica transazione.
+// Imposta lo stato su tutti gli asset indicati, in un'unica transazione.
 export function bulkSet(
   assets: BulkAsset[],
   courseId: string,
@@ -110,7 +139,7 @@ export function bulkSet(
 ): void {
   const apply = db.transaction((items: BulkAsset[]) => {
     for (const a of items) {
-      for (const asset_type of ['dispensa', 'slides'] as AssetType[]) {
+      for (const asset_type of a.asset_types) {
         setApproval({
           lesson_id: a.lesson_id,
           asset_type,

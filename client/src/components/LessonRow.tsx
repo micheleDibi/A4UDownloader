@@ -28,45 +28,42 @@ const STATUS_META: Record<
     row: 'border-slate-200 bg-white',
   },
   approved: {
-    label: 'Approvata',
+    label: 'Approvato',
     pill: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
     row: 'border-emerald-200 bg-emerald-50/40',
   },
   rejected: {
-    label: 'Rifiutata',
+    label: 'Rifiutato',
     pill: 'bg-red-50 text-red-700 ring-red-200',
     row: 'border-red-200 bg-red-50/40',
   },
 };
 
-interface AssetRowProps {
+interface AssetDescriptor {
+  type: AssetType;
   icon: LucideIcon;
   label: string;
   downloadHref: string;
   downloadEnabled: boolean;
   downloadTitle: string;
+}
+
+interface AssetRowProps {
+  desc: AssetDescriptor;
   state: AssetState;
   busy: boolean;
   onSet: (status: ApprovalStatus, note?: string | null) => void;
 }
 
-function AssetRow({
-  icon: Icon,
-  label,
-  downloadHref,
-  downloadEnabled,
-  downloadTitle,
-  state,
-  busy,
-  onSet,
-}: AssetRowProps) {
+function AssetRow({ desc, state, busy, onSet }: AssetRowProps) {
   const meta = STATUS_META[state.status];
+  const Icon = desc.icon;
   return (
     <div className={`rounded-lg border px-3 py-2.5 transition-colors ${meta.row}`}>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex min-w-0 items-center gap-2">
           <Icon className="h-4 w-4 shrink-0 text-slate-400" />
-          <span className="text-sm font-medium text-slate-700">{label}</span>
+          <span className="text-sm font-medium text-slate-700">{desc.label}</span>
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${meta.pill}`}
           >
@@ -75,10 +72,10 @@ function AssetRow({
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <DownloadButton
-            href={downloadHref}
+            href={desc.downloadHref}
             label="Scarica"
-            enabled={downloadEnabled}
-            title={downloadTitle}
+            enabled={desc.downloadEnabled}
+            title={desc.downloadTitle}
             variant="secondary"
           />
           <ApprovalControl state={state} disabled={busy} onSet={onSet} />
@@ -103,6 +100,46 @@ function AssetRow({
 
 export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) {
   const isAssessment = lesson.lesson_type === 'ASSESSMENT';
+
+  const assets: AssetDescriptor[] = [
+    {
+      type: 'dispensa',
+      icon: FileText,
+      label: 'Dispensa',
+      downloadHref: `/api/lessons/${lesson.id}/pdf`,
+      downloadEnabled: lesson.dispensa_available !== false,
+      downloadTitle: 'Scarica la dispensa (PDF)',
+    },
+    {
+      type: 'slides',
+      icon: Presentation,
+      label: 'Slide',
+      downloadHref: `/api/lessons/${lesson.id}/file?kind=slides`,
+      downloadEnabled: !!lesson.slides_available,
+      downloadTitle: 'Scarica le slide (PDF)',
+    },
+  ];
+  if (lesson.video_available) {
+    assets.push({
+      type: 'video',
+      icon: Video,
+      label: 'Video',
+      downloadHref: `/api/lessons/${lesson.id}/file?kind=video`,
+      downloadEnabled: true,
+      downloadTitle: 'Scarica il video della lezione (MP4)',
+    });
+  }
+  if (lesson.avatar_video_available) {
+    assets.push({
+      type: 'avatar',
+      icon: Clapperboard,
+      label: 'Video con avatar',
+      downloadHref: `/api/lessons/${lesson.id}/file?kind=avatar`,
+      downloadEnabled: true,
+      downloadTitle: 'Scarica il video con avatar (MP4)',
+    });
+  }
+
   return (
     <div className="py-2.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -127,24 +164,6 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
               enabled
             />
           )}
-          {!isAssessment && lesson.video_available && (
-            <DownloadButton
-              href={`/api/lessons/${lesson.id}/file?kind=video`}
-              label="Video"
-              icon={Video}
-              enabled
-              title="Scarica il video della lezione (MP4)"
-            />
-          )}
-          {!isAssessment && lesson.avatar_video_available && (
-            <DownloadButton
-              href={`/api/lessons/${lesson.id}/file?kind=avatar`}
-              label="Video avatar"
-              icon={Clapperboard}
-              enabled
-              title="Scarica il video con avatar (MP4)"
-            />
-          )}
           <DownloadButton
             href={`/api/lessons/${lesson.id}/all.zip`}
             label="ZIP lezione"
@@ -157,30 +176,17 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
 
       {!isAssessment && (
         <div className="mt-2.5 space-y-2 sm:pl-6">
-          <AssetRow
-            icon={FileText}
-            label="Dispensa"
-            downloadHref={`/api/lessons/${lesson.id}/pdf`}
-            downloadEnabled={lesson.dispensa_available !== false}
-            downloadTitle="Scarica la dispensa (PDF)"
-            state={getState(lesson.id, 'dispensa')}
-            busy={busy}
-            onSet={(status, note) =>
-              onSetAsset(lesson.id, 'dispensa', status, note)
-            }
-          />
-          <AssetRow
-            icon={Presentation}
-            label="Slide"
-            downloadHref={`/api/lessons/${lesson.id}/file?kind=slides`}
-            downloadEnabled={!!lesson.slides_available}
-            downloadTitle="Scarica le slide (PDF)"
-            state={getState(lesson.id, 'slides')}
-            busy={busy}
-            onSet={(status, note) =>
-              onSetAsset(lesson.id, 'slides', status, note)
-            }
-          />
+          {assets.map((desc) => (
+            <AssetRow
+              key={desc.type}
+              desc={desc}
+              state={getState(lesson.id, desc.type)}
+              busy={busy}
+              onSet={(status, note) =>
+                onSetAsset(lesson.id, desc.type, status, note)
+              }
+            />
+          ))}
         </div>
       )}
     </div>
