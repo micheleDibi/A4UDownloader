@@ -53,6 +53,7 @@ export function ModuleAccordion({
   let rejected = 0;
   for (const l of contentLessons) {
     const types: AssetType[] = ['dispensa', 'slides'];
+    if (l.discorso_available) types.push('discorso');
     if (l.video_available) types.push('video');
     if (l.avatar_video_available) types.push('avatar');
     total += types.length;

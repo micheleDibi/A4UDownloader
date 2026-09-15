@@ -42,6 +42,10 @@ const COURSE_SELECT = `
          COUNT(*) FILTER (WHERE NOT cl.is_assessment)::int AS content_lessons_count,
          COUNT(*) FILTER (
            WHERE NOT cl.is_assessment
+             AND cl.speech_pdf_status = 'ready' AND cl.speech_pdf_path IS NOT NULL
+         )::int AS discorso_count,
+         COUNT(*) FILTER (
+           WHERE NOT cl.is_assessment
              AND cl.video_status = 'ready' AND cl.video_path IS NOT NULL
          )::int AS video_count,
          COUNT(*) FILTER (
@@ -76,14 +80,16 @@ interface CourseRow {
   instructor_name: string | null;
   lessons_count: number;
   content_lessons_count: number;
+  discorso_count: number;
   video_count: number;
   avatar_count: number;
 }
 
 // Course + conteggi degli asset approvabili (per il riepilogo approvazioni:
-// asset totali = content_lessons_count × 2 + video presenti + avatar presenti).
+// asset totali = content_lessons_count × 2 + discorsi + video + avatar presenti).
 export interface CourseWithMeta extends Course {
   content_lessons_count: number;
+  discorso_count: number;
   video_count: number;
   avatar_count: number;
 }
@@ -113,6 +119,7 @@ export async function listCompleteCourses(): Promise<CourseWithMeta[]> {
   return res.rows.map((r) => ({
     ...mapCourse(r),
     content_lessons_count: r.content_lessons_count,
+    discorso_count: r.discorso_count,
     video_count: r.video_count,
     avatar_count: r.avatar_count,
   }));
@@ -156,6 +163,8 @@ export interface LessonRecord {
   pdf_path: string | null;
   slides_pdf_status: string;
   slides_pdf_path: string | null;
+  speech_pdf_status: string;
+  speech_pdf_path: string | null;
   content_status: string;
   content_raw: LessonAssessmentContent | null;
   video_status: string;
@@ -168,6 +177,7 @@ const LESSON_RECORD_COLS = `
   cl.id::text AS id, cl.title, cl.position, cl.is_assessment,
   cl.pdf_status, cl.pdf_path,
   cl.slides_pdf_status, cl.slides_pdf_path,
+  cl.speech_pdf_status, cl.speech_pdf_path,
   cl.content_status, cl.content_raw,
   cl.video_status, cl.video_path,
   cl.avatar_video_status, cl.avatar_video_path`;
@@ -181,6 +191,7 @@ export function toPublicLesson(r: LessonRecord): Lesson {
     is_assessment: r.is_assessment,
     dispensa_available: r.pdf_status === 'ready' && !!r.pdf_path,
     slides_available: r.slides_pdf_status === 'ready' && !!r.slides_pdf_path,
+    discorso_available: r.speech_pdf_status === 'ready' && !!r.speech_pdf_path,
     video_available: r.video_status === 'ready' && !!r.video_path,
     avatar_video_available:
       r.avatar_video_status === 'ready' && !!r.avatar_video_path,
@@ -245,8 +256,9 @@ export async function getModuleDetail(id: string): Promise<ModuleDetail | null> 
 // Helper per le approvazioni: elenco lezioni di CONTENUTO (no assessment) e
 // proprietà di una lezione. Usati per le azioni massive e per i totali.
 // ---------------------------------------------------------------------------
-// Espressioni SQL che indicano se video/avatar sono pronti su OVH.
+// Espressioni SQL che indicano se discorso/video/avatar sono pronti su OVH.
 const AVAILABILITY_COLS = `
+  (cl.speech_pdf_status = 'ready' AND cl.speech_pdf_path IS NOT NULL) AS discorso_available,
   (cl.video_status = 'ready' AND cl.video_path IS NOT NULL) AS video_available,
   (cl.avatar_video_status = 'ready' AND cl.avatar_video_path IS NOT NULL) AS avatar_available`;
 
@@ -254,6 +266,7 @@ export interface ContentLessonAssets {
   id: string;
   course_id: string;
   module_id: string;
+  discorso_available: boolean;
   video_available: boolean;
   avatar_available: boolean;
 }

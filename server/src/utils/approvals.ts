@@ -6,15 +6,23 @@ import type {
 } from '../types';
 
 const APPROVAL_STATUSES: readonly string[] = ['approved', 'rejected', 'pending'];
-const ASSET_TYPES: readonly string[] = ['dispensa', 'slides', 'video', 'avatar'];
+const ASSET_TYPES: readonly string[] = [
+  'dispensa',
+  'slides',
+  'discorso',
+  'video',
+  'avatar',
+];
 
 // Tipi di asset approvabili per una lezione di contenuto: dispensa e slide
-// sempre; video e/o avatar solo quando il file è presente su OVH.
+// sempre; discorso, video e/o avatar solo quando il file è presente su OVH.
 export function approvableAssetTypes(l: {
+  discorso_available?: boolean;
   video_available?: boolean;
   avatar_available?: boolean;
 }): AssetType[] {
   const t: AssetType[] = ['dispensa', 'slides'];
+  if (l.discorso_available) t.push('discorso');
   if (l.video_available) t.push('video');
   if (l.avatar_available) t.push('avatar');
   return t;

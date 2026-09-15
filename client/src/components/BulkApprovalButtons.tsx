@@ -46,7 +46,7 @@ export function BulkApprovalButtons({
       {dialog === 'approve' && (
         <ConfirmDialog
           title="Approva tutto"
-          message={`Confermi l'approvazione di tutte le dispense e slide di ${scopeLabel}?`}
+          message={`Confermi l'approvazione di tutte le risorse di ${scopeLabel}?`}
           confirmLabel="Approva tutto"
           onConfirm={(note) => {
             onApprove(note);
@@ -58,7 +58,7 @@ export function BulkApprovalButtons({
       {dialog === 'reject' && (
         <ConfirmDialog
           title="Rifiuta tutto"
-          message={`Confermi il rifiuto di tutte le dispense e slide di ${scopeLabel}? Puoi aggiungere una motivazione.`}
+          message={`Confermi il rifiuto di tutte le risorse di ${scopeLabel}? Puoi aggiungere una motivazione.`}
           confirmLabel="Rifiuta tutto"
           confirmVariant="danger"
           withNote

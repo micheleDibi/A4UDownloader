@@ -39,13 +39,19 @@ lessonsRouter.get('/:id/pdf', async (req, res, next) => {
 });
 
 // File scaricabili della lezione per tipo:
-//  - slides → PDF delle slide (namespace generated_pdfs/)
-//  - video  → MP4 della lezione (namespace uploads/lesson_videos/)
-//  - avatar → MP4 con avatar parlante (uploads/lesson_avatar_videos/)
+//  - slides   → PDF delle slide (namespace generated_pdfs/)
+//  - discorso → PDF del discorso temporizzato (generated_pdfs/, suffisso _speech)
+//  - video    → MP4 della lezione (namespace uploads/lesson_videos/)
+//  - avatar   → MP4 con avatar parlante (uploads/lesson_avatar_videos/)
 lessonsRouter.get('/:id/file', async (req, res, next) => {
   try {
     const kind = String(req.query.kind ?? '');
-    if (kind !== 'slides' && kind !== 'video' && kind !== 'avatar') {
+    if (
+      kind !== 'slides' &&
+      kind !== 'discorso' &&
+      kind !== 'video' &&
+      kind !== 'avatar'
+    ) {
       throw new HttpError(400, { error: 'invalid_kind' });
     }
     const lesson = await getLessonRecord(req.params.id);
@@ -57,6 +63,13 @@ lessonsRouter.get('/:id/file', async (req, res, next) => {
         throw new HttpError(404, { error: 'file_not_available' });
       }
       await streamPdf(res, lesson.slides_pdf_path, `${baseName}-slides.pdf`);
+      return;
+    }
+    if (kind === 'discorso') {
+      if (lesson.speech_pdf_status !== 'ready' || !lesson.speech_pdf_path) {
+        throw new HttpError(404, { error: 'file_not_available' });
+      }
+      await streamPdf(res, lesson.speech_pdf_path, `${baseName}-discorso.pdf`);
       return;
     }
     if (kind === 'video') {
@@ -100,7 +113,7 @@ lessonsRouter.get('/:id/all.zip', async (req, res, next) => {
   }
 });
 
-// Approvazione del singolo asset (dispensa o slides) di una lezione.
+// Approvazione del singolo asset (dispensa, slides, discorso, video, avatar).
 lessonsRouter.put('/:id/approvals/:assetType', async (req, res, next) => {
   try {
     const assetType = req.params.assetType;

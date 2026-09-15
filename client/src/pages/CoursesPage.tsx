@@ -90,7 +90,7 @@ export function CoursesPage() {
             Corsi da valutare
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Corsi completi pronti per la valutazione di dispense e slide.
+            Corsi completi pronti per la valutazione dei materiali didattici.
           </p>
         </div>
         {data && (

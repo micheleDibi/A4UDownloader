@@ -1,4 +1,11 @@
-import { AlertCircle, Clapperboard, FileText, Presentation, Video } from 'lucide-react';
+import {
+  AlertCircle,
+  Clapperboard,
+  FileText,
+  Mic,
+  Presentation,
+  Video,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ApprovalStatus, AssetType, Lesson } from '../api/types';
 import type { AssetState } from '../hooks/useApprovals';
@@ -119,6 +126,16 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
       downloadTitle: 'Scarica le slide (PDF)',
     },
   ];
+  if (lesson.discorso_available) {
+    assets.push({
+      type: 'discorso',
+      icon: Mic,
+      label: 'Discorso',
+      downloadHref: `/api/lessons/${lesson.id}/file?kind=discorso`,
+      downloadEnabled: true,
+      downloadTitle: 'Scarica il discorso (PDF)',
+    });
+  }
   if (lesson.video_available) {
     assets.push({
       type: 'video',

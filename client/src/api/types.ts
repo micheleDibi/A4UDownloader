@@ -13,7 +13,12 @@ export interface Course {
 }
 
 // --- Approvazioni ---
-export type AssetType = 'dispensa' | 'slides' | 'video' | 'avatar';
+export type AssetType =
+  | 'dispensa'
+  | 'slides'
+  | 'discorso'
+  | 'video'
+  | 'avatar';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export interface Approval {
@@ -54,6 +59,7 @@ export interface Lesson {
   is_assessment?: boolean;
   dispensa_available?: boolean;
   slides_available?: boolean;
+  discorso_available?: boolean;
   video_available?: boolean;
   avatar_video_available?: boolean;
 }

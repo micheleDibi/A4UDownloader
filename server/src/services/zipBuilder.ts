@@ -33,16 +33,23 @@ function lessonContentTargets(
       source: 'pdf',
     });
   }
+  if (lesson.speech_pdf_status === 'ready' && lesson.speech_pdf_path) {
+    targets.push({
+      name: `${folderPrefix}03-discorso.pdf`,
+      rel: lesson.speech_pdf_path,
+      source: 'pdf',
+    });
+  }
   if (lesson.video_status === 'ready' && lesson.video_path) {
     targets.push({
-      name: `${folderPrefix}03-video.mp4`,
+      name: `${folderPrefix}04-video.mp4`,
       rel: lesson.video_path,
       source: 'upload',
     });
   }
   if (lesson.avatar_video_status === 'ready' && lesson.avatar_video_path) {
     targets.push({
-      name: `${folderPrefix}04-video-avatar.mp4`,
+      name: `${folderPrefix}05-video-avatar.mp4`,
       rel: lesson.avatar_video_path,
       source: 'upload',
     });

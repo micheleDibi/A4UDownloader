@@ -1,20 +1,24 @@
 # A4U Downloader
 
-> Web app per sfogliare e scaricare in massa le dispense e le slide dei corsi prodotti con la piattaforma **a4u**.
+> Web app per sfogliare, scaricare in massa e approvare i materiali didattici dei corsi prodotti con la piattaforma **a4u**.
 
-Niente più click manuali lezione per lezione: scarichi dispense (PDF), slide (PDF) e il CSV dei quiz — singolarmente, per intera lezione, o per intero modulo. Vengono mostrati **solo i corsi completi** (tutti i file generati) di una specifica organizzazione.
+Niente più click manuali lezione per lezione: scarichi dispense (PDF), slide (PDF), discorso (PDF), video (MP4) e il CSV dei quiz — singolarmente, per intera lezione, o per intero modulo. Vengono mostrati **solo i corsi completi** (dispense e slide generate) di una specifica organizzazione. Ogni risorsa può inoltre essere **approvata o rifiutata** dalla valutatrice, con nota di motivazione.
 
 ---
 
 ## Cosa fa
 
-Legge i corsi **direttamente dal database PostgreSQL locale** della piattaforma a4u e recupera i file (PDF) **dallo storage OVH** servito via HTTP. Mostra **solo** i corsi dell'organizzazione configurata che hanno **tutti** i file pronti: per ogni lezione di contenuto la **dispensa** e le **slide**, e — se il corso ha le verifiche — il **quiz**.
+Legge i corsi **direttamente dal database PostgreSQL locale** della piattaforma a4u e recupera i file **dallo storage OVH** servito via HTTP. Mostra **solo** i corsi dell'organizzazione configurata che hanno i file **obbligatori** pronti: per ogni lezione di contenuto la **dispensa** e le **slide**, e — se il corso ha le verifiche — il **quiz**.
 
 Per ogni **lezione di contenuto**:
 
 - **Dispensa** in PDF
 - **Slide** in PDF
-- **ZIP della lezione** che impacchetta dispensa + slide
+- **Discorso** in PDF — *opzionale*: in a4u l'export del discorso va generato a mano, quindi compare solo dove esiste
+- **Video** e **Video con avatar** in MP4 — *opzionali*, come sopra
+- **ZIP della lezione** che impacchetta tutte le risorse disponibili
+
+> Discorso, video e avatar **non** concorrono alla completezza del corso: un corso resta scaricabile anche se ne è privo. Compaiono nell'interfaccia soltanto quando il file è effettivamente pronto su OVH.
 
 Per ogni **lezione di valutazione** (quiz):
 
@@ -23,6 +27,8 @@ Per ogni **lezione di valutazione** (quiz):
 Per ogni **modulo**:
 
 - **ZIP del modulo** con sotto-cartelle ordinate (`01-titolo-lezione/`, `02-…/`)
+
+Dentro ogni ZIP i file sono numerati in ordine: `01-dispensa.pdf`, `02-slides.pdf`, `03-discorso.pdf`, `04-video.mp4`, `05-video-avatar.mp4`.
 
 I download di grandi dimensioni vengono **streamati** (no buffer in RAM).
 
@@ -72,6 +78,7 @@ In sviluppo:
 | `DATABASE_URL` | Connessione al PostgreSQL di a4u (sola lettura). Formato node-postgres: `postgres://user:pass@host:porta/db`. La piattaforma a4u usa il formato SQLAlchemy `postgresql+asyncpg://…`: togliere il `+asyncpg`. |
 | `MEDIA_BASE_URL` | URL pubblica base da cui OVH serve i PDF (= `OVH_PUBLIC_BASE_URL` di a4u, es. `https://progettiersaf.com/media`). |
 | `A4U_ORG_NAME` | Nome dell'organizzazione di cui mostrare i corsi (default `SSML`). |
+| `APPROVALS_DB_PATH` | Percorso del DB SQLite locale delle approvazioni (default `./data/approvals.db`). Usare un percorso **persistente**, non cancellato dai deploy. |
 | `AUTH_USERNAME` | Username per accedere all'app |
 | `AUTH_PASSWORD` | Password per accedere all'app |
 | `JWT_SECRET` | Stringa random di almeno 32 caratteri |
@@ -129,7 +136,7 @@ A4UDownloader/
 1. Client chiama il backend (`/api/...`) con cookie di sessione.
 2. Backend valida la sessione, poi interroga **direttamente il PostgreSQL di a4u** (sola lettura) per corsi/moduli/lezioni.
 3. Un corso compare **solo** se appartiene all'organizzazione configurata ed è **completo**: per ogni lezione non-assessment `pdf_status='ready'` (dispensa) e `slides_pdf_status='ready'` (slide); se le verifiche sono abilitate, ogni lezione assessment ha `content_status` pronto.
-4. I PDF (path `generated_pdfs/{org}/{course}/{lesson}.pdf` su `MEDIA_BASE_URL`) vengono **proxati in streaming** dal backend, con un nome file leggibile.
+4. I PDF vivono tutti sotto `generated_pdfs/{org}/{course}/` su `MEDIA_BASE_URL` e si distinguono per suffisso — `{lesson}.pdf` (dispensa), `{lesson}_slides.pdf` (slide), `{lesson}_speech.pdf` (discorso); i video stanno sotto `uploads/`. Vengono **proxati in streaming** dal backend, con un nome file leggibile.
 5. Il quiz scaricabile è un **CSV generato al volo** dai dati JSON (`content_raw`) della lezione di verifica.
 6. Per gli ZIP, `archiver` fa streaming dei file da OVH al client mentre l'archivio viene compresso al volo.
 
@@ -147,7 +154,11 @@ Tutti protetti tranne `/health`, `/auth/login`, `/auth/logout`.
 | `GET /api/modules/:id` | Dettaglio modulo con lista lezioni |
 | `GET /api/lessons/:id` | Dettaglio lezione (flag disponibilità + tipo) |
 | `GET /api/lessons/:id/pdf` | Dispensa PDF (stream proxy da OVH) |
-| `GET /api/lessons/:id/file?kind=slides` | Slide PDF (stream proxy da OVH) |
+| `GET /api/lessons/:id/file?kind=slides\|discorso\|video\|avatar` | Slide / discorso (PDF) e video / video con avatar (MP4), stream proxy da OVH |
+| `GET /api/courses/:id/approvals` | Stato approvazioni del corso + riepilogo |
+| `POST /api/courses/:id/approvals` | Approvazione massiva sull'intero corso |
+| `POST /api/modules/:id/approvals` | Approvazione massiva sull'intero modulo |
+| `PUT /api/lessons/:id/approvals/:assetType` | Approva/rifiuta un singolo asset |
 | `GET /api/lessons/:id/quiz.csv` | CSV del quiz per lezione ASSESSMENT |
 | `GET /api/lessons/:id/all.zip` | ZIP streaming dei file della lezione |
 | `GET /api/modules/:id/all.zip` | ZIP streaming del modulo (cartelle per lezione) |
