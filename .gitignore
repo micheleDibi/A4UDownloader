@@ -11,8 +11,3 @@ build/
 coverage/
 *.tsbuildinfo
 
-# DB locale delle approvazioni (SQLite)
-data/
-*.db
-*.db-shm
-*.db-wal

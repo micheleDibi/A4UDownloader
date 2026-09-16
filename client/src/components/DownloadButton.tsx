@@ -49,7 +49,7 @@ export function DownloadButton({
       className={`${base} ${enabledCls}`}
       title={title ?? label}
     >
-      <Download className="h-3.5 w-3.5" aria-hidden="true" />
+      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
       {label}
     </a>
   );

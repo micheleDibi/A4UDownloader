@@ -1,35 +1,14 @@
 import { useState } from 'react';
 import { ChevronDown, FolderArchive } from 'lucide-react';
-import type {
-  ApprovalStatus,
-  AssetType,
-  ModuleDetail,
-  ModuleSummary,
-} from '../api/types';
-import type { AssetState } from '../hooks/useApprovals';
+import type { ModuleDetail, ModuleSummary } from '../api/types';
 import { LessonRow } from './LessonRow';
 import { Spinner } from './Spinner';
-import { ApprovalProgress } from './ApprovalProgress';
-import { BulkApprovalButtons } from './BulkApprovalButtons';
 
 interface Props {
   moduleSummary: ModuleSummary;
   detail?: ModuleDetail;
   isLoading: boolean;
   isError: boolean;
-  getState: (lessonId: string, assetType: AssetType) => AssetState;
-  onSetAsset: (
-    lessonId: string,
-    assetType: AssetType,
-    status: ApprovalStatus,
-    note?: string | null
-  ) => void;
-  onSetModule: (
-    moduleId: string,
-    status: ApprovalStatus,
-    note?: string | null
-  ) => void;
-  busy: boolean;
 }
 
 export function ModuleAccordion({
@@ -37,33 +16,11 @@ export function ModuleAccordion({
   detail,
   isLoading,
   isError,
-  getState,
-  onSetAsset,
-  onSetModule,
-  busy,
 }: Props) {
   const [open, setOpen] = useState(false);
   const lessons = detail
     ? detail.lessons.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
     : [];
-
-  const contentLessons = lessons.filter((l) => l.lesson_type !== 'ASSESSMENT');
-  let total = 0;
-  let approved = 0;
-  let rejected = 0;
-  for (const l of contentLessons) {
-    const types: AssetType[] = ['dispensa', 'slides'];
-    if (l.discorso_available) types.push('discorso');
-    if (l.video_available) types.push('video');
-    if (l.avatar_video_available) types.push('avatar');
-    total += types.length;
-    for (const at of types) {
-      const s = getState(l.id, at).status;
-      if (s === 'approved') approved++;
-      else if (s === 'rejected') rejected++;
-    }
-  }
-  const summary = { total, approved, rejected, pending: total - approved - rejected };
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-card">
@@ -88,15 +45,6 @@ export function ModuleAccordion({
             {isLoading && <Spinner size="sm" />}
           </button>
           <div className="flex items-center gap-2">
-            {detail && total > 0 && (
-              <BulkApprovalButtons
-                scopeLabel="questo modulo"
-                size="sm"
-                disabled={busy}
-                onApprove={(note) => onSetModule(m.id, 'approved', note)}
-                onReject={(note) => onSetModule(m.id, 'rejected', note)}
-              />
-            )}
             <a
               href={`/api/modules/${m.id}/all.zip`}
               download
@@ -108,7 +56,6 @@ export function ModuleAccordion({
             </a>
           </div>
         </div>
-        {detail && total > 0 && <ApprovalProgress summary={summary} className="mt-3" />}
       </div>
 
       {open && (
@@ -127,13 +74,7 @@ export function ModuleAccordion({
             <ul className="divide-y divide-slate-200/70">
               {lessons.map((l, i) => (
                 <li key={l.id}>
-                  <LessonRow
-                    lesson={l}
-                    index={i}
-                    getState={getState}
-                    onSetAsset={onSetAsset}
-                    busy={busy}
-                  />
+                  <LessonRow lesson={l} index={i} />
                 </li>
               ))}
             </ul>

@@ -1,53 +1,14 @@
-import {
-  AlertCircle,
-  Clapperboard,
-  FileText,
-  Mic,
-  Presentation,
-  Video,
-} from 'lucide-react';
+import { Clapperboard, FileText, Mic, Presentation, Video } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { ApprovalStatus, AssetType, Lesson } from '../api/types';
-import type { AssetState } from '../hooks/useApprovals';
+import type { Lesson } from '../api/types';
 import { DownloadButton } from './DownloadButton';
-import { ApprovalControl } from './ApprovalControl';
 
 interface Props {
   lesson: Lesson;
   index: number;
-  getState: (lessonId: string, assetType: AssetType) => AssetState;
-  onSetAsset: (
-    lessonId: string,
-    assetType: AssetType,
-    status: ApprovalStatus,
-    note?: string | null
-  ) => void;
-  busy: boolean;
 }
 
-const STATUS_META: Record<
-  ApprovalStatus,
-  { label: string; pill: string; row: string }
-> = {
-  pending: {
-    label: 'In attesa',
-    pill: 'bg-slate-100 text-slate-500 ring-slate-200',
-    row: 'border-slate-200 bg-white',
-  },
-  approved: {
-    label: 'Approvato',
-    pill: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-    row: 'border-emerald-200 bg-emerald-50/40',
-  },
-  rejected: {
-    label: 'Rifiutato',
-    pill: 'bg-red-50 text-red-700 ring-red-200',
-    row: 'border-red-200 bg-red-50/40',
-  },
-};
-
 interface AssetDescriptor {
-  type: AssetType;
   icon: LucideIcon;
   label: string;
   downloadHref: string;
@@ -55,62 +16,13 @@ interface AssetDescriptor {
   downloadTitle: string;
 }
 
-interface AssetRowProps {
-  desc: AssetDescriptor;
-  state: AssetState;
-  busy: boolean;
-  onSet: (status: ApprovalStatus, note?: string | null) => void;
-}
-
-function AssetRow({ desc, state, busy, onSet }: AssetRowProps) {
-  const meta = STATUS_META[state.status];
-  const Icon = desc.icon;
-  return (
-    <div className={`rounded-lg border px-3 py-2.5 transition-colors ${meta.row}`}>
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <Icon className="h-4 w-4 shrink-0 text-slate-400" />
-          <span className="text-sm font-medium text-slate-700">{desc.label}</span>
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${meta.pill}`}
-          >
-            {meta.label}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <DownloadButton
-            href={desc.downloadHref}
-            label="Scarica"
-            enabled={desc.downloadEnabled}
-            title={desc.downloadTitle}
-            variant="secondary"
-          />
-          <ApprovalControl state={state} disabled={busy} onSet={onSet} />
-        </div>
-      </div>
-      {state.status === 'rejected' && (
-        <div className="mt-2 flex items-start gap-2 rounded-md bg-red-50 px-2.5 py-1.5 text-xs text-red-700 ring-1 ring-inset ring-red-100">
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-          <span>
-            <span className="font-semibold">Motivazione del rifiuto: </span>
-            {state.note ? (
-              state.note
-            ) : (
-              <span className="italic text-red-700">nessuna indicata</span>
-            )}
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) {
+export function LessonRow({ lesson, index }: Props) {
   const isAssessment = lesson.lesson_type === 'ASSESSMENT';
 
+  // Dispensa e slide sono sempre mostrate (disabilitate se il file manca);
+  // discorso, video e avatar compaiono solo quando il file è pronto su OVH.
   const assets: AssetDescriptor[] = [
     {
-      type: 'dispensa',
       icon: FileText,
       label: 'Dispensa',
       downloadHref: `/api/lessons/${lesson.id}/pdf`,
@@ -118,7 +30,6 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
       downloadTitle: 'Scarica la dispensa (PDF)',
     },
     {
-      type: 'slides',
       icon: Presentation,
       label: 'Slide',
       downloadHref: `/api/lessons/${lesson.id}/file?kind=slides`,
@@ -128,7 +39,6 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
   ];
   if (lesson.discorso_available) {
     assets.push({
-      type: 'discorso',
       icon: Mic,
       label: 'Discorso',
       downloadHref: `/api/lessons/${lesson.id}/file?kind=discorso`,
@@ -138,7 +48,6 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
   }
   if (lesson.video_available) {
     assets.push({
-      type: 'video',
       icon: Video,
       label: 'Video',
       downloadHref: `/api/lessons/${lesson.id}/file?kind=video`,
@@ -148,7 +57,6 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
   }
   if (lesson.avatar_video_available) {
     assets.push({
-      type: 'avatar',
       icon: Clapperboard,
       label: 'Video con avatar',
       downloadHref: `/api/lessons/${lesson.id}/file?kind=avatar`,
@@ -192,16 +100,16 @@ export function LessonRow({ lesson, index, getState, onSetAsset, busy }: Props) 
       </div>
 
       {!isAssessment && (
-        <div className="mt-2.5 space-y-2 sm:pl-6">
-          {assets.map((desc) => (
-            <AssetRow
-              key={desc.type}
-              desc={desc}
-              state={getState(lesson.id, desc.type)}
-              busy={busy}
-              onSet={(status, note) =>
-                onSetAsset(lesson.id, desc.type, status, note)
-              }
+        <div className="mt-2 flex flex-wrap gap-2 sm:pl-6">
+          {assets.map((d) => (
+            <DownloadButton
+              key={d.label}
+              href={d.downloadHref}
+              label={d.label}
+              enabled={d.downloadEnabled}
+              title={d.downloadTitle}
+              icon={d.icon}
+              variant="secondary"
             />
           ))}
         </div>

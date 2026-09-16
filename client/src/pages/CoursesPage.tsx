@@ -6,22 +6,16 @@ import { api } from '../api/client';
 import type { Course } from '../api/types';
 import { Layout } from '../components/Layout';
 import { Spinner } from '../components/Spinner';
-import { StatusBadge } from '../components/StatusBadge';
 
 function CourseCard({ course }: { course: Course }) {
-  const s = course.approval_summary;
-  const pct = (n: number) => (s && s.total > 0 ? (n / s.total) * 100 : 0);
   return (
     <Link
       to={`/courses/${course.id}`}
       className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-card-hover"
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100">
-          <BookOpen className="h-5 w-5" />
-        </span>
-        <StatusBadge summary={s} />
-      </div>
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100">
+        <BookOpen className="h-5 w-5" />
+      </span>
 
       <h3 className="mt-3 line-clamp-2 text-[15px] font-semibold leading-snug text-slate-800 group-hover:text-brand-700">
         {course.title || course.name}
@@ -37,15 +31,6 @@ function CourseCard({ course }: { course: Course }) {
           {course.cfu ?? '—'} CFU
         </span>
       </div>
-
-      {s && s.total > 0 && (
-        <div className="mt-auto pt-3">
-          <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-            <div className="bg-emerald-500" style={{ width: `${pct(s.approved)}%` }} />
-            <div className="bg-red-500" style={{ width: `${pct(s.rejected)}%` }} />
-          </div>
-        </div>
-      )}
     </Link>
   );
 }
@@ -87,10 +72,10 @@ export function CoursesPage() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
-            Corsi da valutare
+            Corsi
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Corsi completi pronti per la valutazione dei materiali didattici.
+            Corsi completi: scarica dispense, slide, discorso e video.
           </p>
         </div>
         {data && (

@@ -1,8 +1,8 @@
 # A4U Downloader
 
-> Web app per sfogliare, scaricare in massa e approvare i materiali didattici dei corsi prodotti con la piattaforma **a4u**.
+> Web app per sfogliare e scaricare in massa i materiali didattici dei corsi prodotti con la piattaforma **a4u**.
 
-Niente più click manuali lezione per lezione: scarichi dispense (PDF), slide (PDF), discorso (PDF), video (MP4) e il CSV dei quiz — singolarmente, per intera lezione, o per intero modulo. Vengono mostrati **solo i corsi completi** (dispense e slide generate) di una specifica organizzazione. Ogni risorsa può inoltre essere **approvata o rifiutata** dalla valutatrice, con nota di motivazione.
+Niente più click manuali lezione per lezione: scarichi dispense (PDF), slide (PDF), discorso (PDF), video (MP4) e il CSV dei quiz — singolarmente, per intera lezione, o per intero modulo. Vengono mostrati **solo i corsi completi** (dispense e slide generate) di una specifica organizzazione.
 
 ---
 
@@ -78,7 +78,6 @@ In sviluppo:
 | `DATABASE_URL` | Connessione al PostgreSQL di a4u (sola lettura). Formato node-postgres: `postgres://user:pass@host:porta/db`. La piattaforma a4u usa il formato SQLAlchemy `postgresql+asyncpg://…`: togliere il `+asyncpg`. |
 | `MEDIA_BASE_URL` | URL pubblica base da cui OVH serve i PDF (= `OVH_PUBLIC_BASE_URL` di a4u, es. `https://progettiersaf.com/media`). |
 | `A4U_ORG_NAME` | Nome dell'organizzazione di cui mostrare i corsi (default `SSML`). |
-| `APPROVALS_DB_PATH` | Percorso del DB SQLite locale delle approvazioni (default `./data/approvals.db`). Usare un percorso **persistente**, non cancellato dai deploy. |
 | `AUTH_USERNAME` | Username per accedere all'app |
 | `AUTH_PASSWORD` | Password per accedere all'app |
 | `JWT_SECRET` | Stringa random di almeno 32 caratteri |
@@ -155,10 +154,6 @@ Tutti protetti tranne `/health`, `/auth/login`, `/auth/logout`.
 | `GET /api/lessons/:id` | Dettaglio lezione (flag disponibilità + tipo) |
 | `GET /api/lessons/:id/pdf` | Dispensa PDF (stream proxy da OVH) |
 | `GET /api/lessons/:id/file?kind=slides\|discorso\|video\|avatar` | Slide / discorso (PDF) e video / video con avatar (MP4), stream proxy da OVH |
-| `GET /api/courses/:id/approvals` | Stato approvazioni del corso + riepilogo |
-| `POST /api/courses/:id/approvals` | Approvazione massiva sull'intero corso |
-| `POST /api/modules/:id/approvals` | Approvazione massiva sull'intero modulo |
-| `PUT /api/lessons/:id/approvals/:assetType` | Approva/rifiuta un singolo asset |
 | `GET /api/lessons/:id/quiz.csv` | CSV del quiz per lezione ASSESSMENT |
 | `GET /api/lessons/:id/all.zip` | ZIP streaming dei file della lezione |
 | `GET /api/modules/:id/all.zip` | ZIP streaming del modulo (cartelle per lezione) |

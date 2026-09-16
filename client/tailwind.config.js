@@ -34,21 +34,6 @@ export default {
         card: '0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06)',
         'card-hover':
           '0 10px 30px -12px rgb(16 24 40 / 0.20), 0 2px 6px -2px rgb(16 24 40 / 0.08)',
-        dialog: '0 24px 60px -15px rgb(16 24 40 / 0.40)',
-      },
-      keyframes: {
-        'fade-in': {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        'scale-in': {
-          '0%': { opacity: '0', transform: 'translateY(6px) scale(0.98)' },
-          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
-        },
-      },
-      animation: {
-        'fade-in': 'fade-in 0.15s ease-out',
-        'scale-in': 'scale-in 0.16s ease-out',
       },
     },
   },

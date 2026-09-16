@@ -23,7 +23,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 A4U Downloader
               </span>
               <span className="block text-[11px] font-medium text-slate-500">
-                Valutazione corsi
+                Download materiali
               </span>
             </span>
           </Link>

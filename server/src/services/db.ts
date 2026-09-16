@@ -38,20 +38,7 @@ const COURSE_SELECT = `
          c.language_code,
          c.lesson_duration_minutes,
          u.full_name AS instructor_name,
-         COUNT(cl.id)::int AS lessons_count,
-         COUNT(*) FILTER (WHERE NOT cl.is_assessment)::int AS content_lessons_count,
-         COUNT(*) FILTER (
-           WHERE NOT cl.is_assessment
-             AND cl.speech_pdf_status = 'ready' AND cl.speech_pdf_path IS NOT NULL
-         )::int AS discorso_count,
-         COUNT(*) FILTER (
-           WHERE NOT cl.is_assessment
-             AND cl.video_status = 'ready' AND cl.video_path IS NOT NULL
-         )::int AS video_count,
-         COUNT(*) FILTER (
-           WHERE NOT cl.is_assessment
-             AND cl.avatar_video_status = 'ready' AND cl.avatar_video_path IS NOT NULL
-         )::int AS avatar_count
+         COUNT(cl.id)::int AS lessons_count
   FROM course c
   JOIN organizations o ON o.id = c.organization_id AND o.name = $1
   LEFT JOIN users u ON u.id = c.assignee_user_id
@@ -79,20 +66,8 @@ interface CourseRow {
   lesson_duration_minutes: number | null;
   instructor_name: string | null;
   lessons_count: number;
-  content_lessons_count: number;
-  discorso_count: number;
-  video_count: number;
-  avatar_count: number;
 }
 
-// Course + conteggi degli asset approvabili (per il riepilogo approvazioni:
-// asset totali = content_lessons_count × 2 + discorsi + video + avatar presenti).
-export interface CourseWithMeta extends Course {
-  content_lessons_count: number;
-  discorso_count: number;
-  video_count: number;
-  avatar_count: number;
-}
 
 function mapCourse(row: CourseRow): Course {
   const duration =
@@ -111,18 +86,12 @@ function mapCourse(row: CourseRow): Course {
   };
 }
 
-export async function listCompleteCourses(): Promise<CourseWithMeta[]> {
+export async function listCompleteCourses(): Promise<Course[]> {
   const res = await pool.query<CourseRow>(
     `${COURSE_SELECT}${COURSE_GROUP} ORDER BY c.title`,
     [config.orgName]
   );
-  return res.rows.map((r) => ({
-    ...mapCourse(r),
-    content_lessons_count: r.content_lessons_count,
-    discorso_count: r.discorso_count,
-    video_count: r.video_count,
-    avatar_count: r.avatar_count,
-  }));
+  return res.rows.map(mapCourse);
 }
 
 export async function getCourseDetail(id: string): Promise<CourseDetail | null> {
@@ -250,69 +219,4 @@ export async function getModuleDetail(id: string): Promise<ModuleDetail | null> 
     order: mod.position,
     lessons: mod.lessons.map(toPublicLesson),
   };
-}
-
-// ---------------------------------------------------------------------------
-// Helper per le approvazioni: elenco lezioni di CONTENUTO (no assessment) e
-// proprietà di una lezione. Usati per le azioni massive e per i totali.
-// ---------------------------------------------------------------------------
-// Espressioni SQL che indicano se discorso/video/avatar sono pronti su OVH.
-const AVAILABILITY_COLS = `
-  (cl.speech_pdf_status = 'ready' AND cl.speech_pdf_path IS NOT NULL) AS discorso_available,
-  (cl.video_status = 'ready' AND cl.video_path IS NOT NULL) AS video_available,
-  (cl.avatar_video_status = 'ready' AND cl.avatar_video_path IS NOT NULL) AS avatar_available`;
-
-export interface ContentLessonAssets {
-  id: string;
-  course_id: string;
-  module_id: string;
-  discorso_available: boolean;
-  video_available: boolean;
-  avatar_available: boolean;
-}
-
-export async function getCourseContentLessons(
-  courseId: string
-): Promise<ContentLessonAssets[]> {
-  if (!isUuid(courseId)) return [];
-  const res = await pool.query<ContentLessonAssets>(
-    `SELECT cl.id::text AS id, cl.course_id::text AS course_id,
-            cl.module_id::text AS module_id,${AVAILABILITY_COLS}
-     FROM course_lesson cl WHERE cl.course_id = $1 AND cl.is_assessment = false`,
-    [courseId]
-  );
-  return res.rows;
-}
-
-export async function getModuleContentLessons(
-  moduleId: string
-): Promise<ContentLessonAssets[]> {
-  if (!isUuid(moduleId)) return [];
-  const res = await pool.query<ContentLessonAssets>(
-    `SELECT cl.id::text AS id, cl.course_id::text AS course_id,
-            cl.module_id::text AS module_id,${AVAILABILITY_COLS}
-     FROM course_lesson cl WHERE cl.module_id = $1 AND cl.is_assessment = false`,
-    [moduleId]
-  );
-  return res.rows;
-}
-
-export interface LessonOwnership {
-  id: string;
-  course_id: string;
-  module_id: string;
-  is_assessment: boolean;
-}
-
-export async function getLessonOwnership(
-  lessonId: string
-): Promise<LessonOwnership | null> {
-  if (!isUuid(lessonId)) return null;
-  const res = await pool.query<LessonOwnership>(
-    `SELECT id::text AS id, course_id::text AS course_id,
-            module_id::text AS module_id, is_assessment
-     FROM course_lesson WHERE id = $1`,
-    [lessonId]
-  );
-  return res.rows[0] ?? null;
 }
