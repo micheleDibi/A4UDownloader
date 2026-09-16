@@ -32,6 +32,8 @@ export interface Lesson {
   discorso_available?: boolean;
   video_available?: boolean;
   avatar_video_available?: boolean;
+  closed_questions_available?: boolean;
+  open_questions_available?: boolean;
 }
 
 export interface ModuleDetail extends ModuleSummary {

@@ -126,6 +126,7 @@ export async function getCourseDetail(id: string): Promise<CourseDetail | null> 
 export interface LessonRecord {
   id: string;
   title: string;
+  course_title: string;
   position: number;
   is_assessment: boolean;
   pdf_status: string;
@@ -144,6 +145,7 @@ export interface LessonRecord {
 
 const LESSON_RECORD_COLS = `
   cl.id::text AS id, cl.title, cl.position, cl.is_assessment,
+  c.title AS course_title,
   cl.pdf_status, cl.pdf_path,
   cl.slides_pdf_status, cl.slides_pdf_path,
   cl.speech_pdf_status, cl.speech_pdf_path,
@@ -164,13 +166,18 @@ export function toPublicLesson(r: LessonRecord): Lesson {
     video_available: r.video_status === 'ready' && !!r.video_path,
     avatar_video_available:
       r.avatar_video_status === 'ready' && !!r.avatar_video_path,
+    closed_questions_available:
+      (r.content_raw?.multiple_choice_questions?.length ?? 0) > 0,
+    open_questions_available: (r.content_raw?.open_questions?.length ?? 0) > 0,
   };
 }
 
 export async function getLessonRecord(id: string): Promise<LessonRecord | null> {
   if (!isUuid(id)) return null;
   const res = await pool.query<LessonRecord>(
-    `SELECT ${LESSON_RECORD_COLS} FROM course_lesson cl WHERE cl.id = $1`,
+    `SELECT ${LESSON_RECORD_COLS} FROM course_lesson cl
+     JOIN course c ON c.id = cl.course_id
+     WHERE cl.id = $1`,
     [id]
   );
   return res.rows[0] ?? null;
@@ -199,6 +206,7 @@ export async function getModuleWithRecords(
   if (!mod) return null;
   const lessonsRes = await pool.query<LessonRecord>(
     `SELECT ${LESSON_RECORD_COLS} FROM course_lesson cl
+     JOIN course c ON c.id = cl.course_id
      WHERE cl.module_id = $1 ORDER BY cl.position`,
     [id]
   );

@@ -4,6 +4,7 @@ import { Readable } from 'node:stream';
 import { contentDisposition } from '../utils/contentDisposition';
 import { ordinalPrefix, slugify } from '../utils/slugify';
 import { buildQuizCsv } from './csvBuilder';
+import { buildOpenQuestionsPdf } from './pdfBuilder';
 import { openPdf, openUpload } from './media';
 import type { LessonRecord, ModuleWithRecords } from './db';
 import { logger } from '../utils/logger';
@@ -118,12 +119,28 @@ async function appendLessonContent(
 ): Promise<string[]> {
   const skipped: string[] = [];
   if (lesson.is_assessment) {
-    try {
-      const csv = buildQuizCsv(lesson.content_raw);
-      await appendBufferAndAwait(archive, csv, `${folderPrefix}quiz.csv`);
-    } catch (e) {
-      logger.warn(`Quiz CSV failed for lesson ${lesson.id}:`, e);
-      skipped.push(`${folderPrefix}quiz.csv`);
+    const raw = lesson.content_raw;
+    if (raw?.multiple_choice_questions?.length) {
+      const name = `${folderPrefix}01-domande-chiuse.csv`;
+      try {
+        await appendBufferAndAwait(archive, buildQuizCsv(raw), name);
+      } catch (e) {
+        logger.warn(`Quiz CSV failed for lesson ${lesson.id}:`, e);
+        skipped.push(name);
+      }
+    }
+    if (raw?.open_questions?.length) {
+      const name = `${folderPrefix}02-domande-aperte.pdf`;
+      try {
+        const pdf = await buildOpenQuestionsPdf(raw, {
+          courseTitle: lesson.course_title,
+          lessonTitle: lesson.title,
+        });
+        await appendBufferAndAwait(archive, pdf, name);
+      } catch (e) {
+        logger.warn(`Quiz PDF failed for lesson ${lesson.id}:`, e);
+        skipped.push(name);
+      }
     }
     return skipped;
   }

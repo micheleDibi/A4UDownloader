@@ -4,6 +4,7 @@ import { HttpError } from '../middleware/errorHandler';
 import { getLessonRecord, toPublicLesson } from '../services/db';
 import { streamPdf, streamUpload } from '../services/media';
 import { buildQuizCsv } from '../services/csvBuilder';
+import { buildOpenQuestionsPdf } from '../services/pdfBuilder';
 import { streamLessonZip } from '../services/zipBuilder';
 import { contentDisposition } from '../utils/contentDisposition';
 import { slugify } from '../utils/slugify';
@@ -87,15 +88,53 @@ lessonsRouter.get('/:id/file', async (req, res, next) => {
   }
 });
 
-lessonsRouter.get('/:id/quiz.csv', async (req, res, next) => {
+// Domande a scelta multipla, in CSV: opzione corretta sempre per prima.
+lessonsRouter.get('/:id/quiz-chiuse.csv', async (req, res, next) => {
   try {
     const lesson = await getLessonRecord(req.params.id);
     if (!lesson) throw new HttpError(404, { error: 'not_found' });
+    if (!lesson.is_assessment) {
+      throw new HttpError(404, { error: 'not_an_assessment' });
+    }
+    if (!lesson.content_raw?.multiple_choice_questions?.length) {
+      throw new HttpError(404, { error: 'no_closed_questions' });
+    }
     const csv = buildQuizCsv(lesson.content_raw);
-    const filename = `${slugify(lesson.title || `quiz-${lesson.id}`)}.csv`;
+    const base = slugify(lesson.title || `quiz-${lesson.id}`);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', contentDisposition(filename));
+    res.setHeader(
+      'Content-Disposition',
+      contentDisposition(`${base}-domande-chiuse.csv`)
+    );
     res.send(csv);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Domande aperte + risposta attesa, in PDF generato al volo: e' l'unico
+// file prodotto da questa app (gli altri sono proxati da OVH).
+lessonsRouter.get('/:id/quiz-aperte.pdf', async (req, res, next) => {
+  try {
+    const lesson = await getLessonRecord(req.params.id);
+    if (!lesson) throw new HttpError(404, { error: 'not_found' });
+    if (!lesson.is_assessment) {
+      throw new HttpError(404, { error: 'not_an_assessment' });
+    }
+    if (!lesson.content_raw?.open_questions?.length) {
+      throw new HttpError(404, { error: 'no_open_questions' });
+    }
+    const pdf = await buildOpenQuestionsPdf(lesson.content_raw, {
+      courseTitle: lesson.course_title,
+      lessonTitle: lesson.title,
+    });
+    const base = slugify(lesson.title || `quiz-${lesson.id}`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      contentDisposition(`${base}-domande-aperte.pdf`)
+    );
+    res.send(pdf);
   } catch (e) {
     next(e);
   }

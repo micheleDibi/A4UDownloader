@@ -2,7 +2,7 @@
 
 > Web app per sfogliare e scaricare in massa i materiali didattici dei corsi prodotti con la piattaforma **a4u**.
 
-Niente più click manuali lezione per lezione: scarichi dispense (PDF), slide (PDF), discorso (PDF), video (MP4) e il CSV dei quiz — singolarmente, per intera lezione, o per intero modulo. Vengono mostrati **solo i corsi completi** (dispense e slide generate) di una specifica organizzazione.
+Niente più click manuali lezione per lezione: scarichi dispense (PDF), slide (PDF), discorso (PDF), video (MP4) e i quiz (CSV + PDF) — singolarmente, per intera lezione, o per intero modulo. Vengono mostrati **solo i corsi completi** (dispense e slide generate) di una specifica organizzazione.
 
 ---
 
@@ -22,7 +22,8 @@ Per ogni **lezione di contenuto**:
 
 Per ogni **lezione di valutazione** (quiz):
 
-- **CSV** con domande a scelta multipla (opzioni + indice della risposta corretta) e domande aperte (risposta attesa) — separatore `;`, BOM UTF-8 per Excel italiano
+- **Domande chiuse (CSV)** — una riga per domanda con le opzioni; la **risposta corretta è sempre la prima opzione**. Separatore `;`, BOM UTF-8 per Excel italiano
+- **Domande aperte (PDF)** — ogni domanda con la traccia della risposta attesa, per la correzione
 
 Per ogni **modulo**:
 
@@ -136,7 +137,7 @@ A4UDownloader/
 2. Backend valida la sessione, poi interroga **direttamente il PostgreSQL di a4u** (sola lettura) per corsi/moduli/lezioni.
 3. Un corso compare **solo** se appartiene all'organizzazione configurata ed è **completo**: per ogni lezione non-assessment `pdf_status='ready'` (dispensa) e `slides_pdf_status='ready'` (slide); se le verifiche sono abilitate, ogni lezione assessment ha `content_status` pronto.
 4. I PDF vivono tutti sotto `generated_pdfs/{org}/{course}/` su `MEDIA_BASE_URL` e si distinguono per suffisso — `{lesson}.pdf` (dispensa), `{lesson}_slides.pdf` (slide), `{lesson}_speech.pdf` (discorso); i video stanno sotto `uploads/`. Vengono **proxati in streaming** dal backend, con un nome file leggibile.
-5. Il quiz scaricabile è un **CSV generato al volo** dai dati JSON (`content_raw`) della lezione di verifica.
+5. I due file del quiz sono **generati al volo** dai dati JSON (`content_raw`) della lezione di verifica: il CSV delle domande chiuse e il PDF delle domande aperte. Il PDF del quiz è l'**unico file prodotto da questa app** — tutti gli altri sono proxati da OVH.
 6. Per gli ZIP, `archiver` fa streaming dei file da OVH al client mentre l'archivio viene compresso al volo.
 
 ### Endpoint backend
@@ -154,7 +155,8 @@ Tutti protetti tranne `/health`, `/auth/login`, `/auth/logout`.
 | `GET /api/lessons/:id` | Dettaglio lezione (flag disponibilità + tipo) |
 | `GET /api/lessons/:id/pdf` | Dispensa PDF (stream proxy da OVH) |
 | `GET /api/lessons/:id/file?kind=slides\|discorso\|video\|avatar` | Slide / discorso (PDF) e video / video con avatar (MP4), stream proxy da OVH |
-| `GET /api/lessons/:id/quiz.csv` | CSV del quiz per lezione ASSESSMENT |
+| `GET /api/lessons/:id/quiz-chiuse.csv` | CSV delle domande a scelta multipla (404 se la lezione non è una verifica) |
+| `GET /api/lessons/:id/quiz-aperte.pdf` | PDF delle domande aperte con le risposte attese |
 | `GET /api/lessons/:id/all.zip` | ZIP streaming dei file della lezione |
 | `GET /api/modules/:id/all.zip` | ZIP streaming del modulo (cartelle per lezione) |
 

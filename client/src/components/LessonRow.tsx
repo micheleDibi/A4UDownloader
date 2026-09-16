@@ -1,4 +1,11 @@
-import { Clapperboard, FileText, Mic, Presentation, Video } from 'lucide-react';
+import {
+  Clapperboard,
+  FileText,
+  ListChecks,
+  Mic,
+  Presentation,
+  Video,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Lesson } from '../api/types';
 import { DownloadButton } from './DownloadButton';
@@ -83,11 +90,22 @@ export function LessonRow({ lesson, index }: Props) {
         </div>
         <div className="flex flex-wrap gap-2">
           {isAssessment && (
-            <DownloadButton
-              href={`/api/lessons/${lesson.id}/quiz.csv`}
-              label="CSV quiz"
-              enabled
-            />
+            <>
+              <DownloadButton
+                href={`/api/lessons/${lesson.id}/quiz-aperte.pdf`}
+                label="Domande Aperte (PDF)"
+                enabled={!!lesson.open_questions_available}
+                icon={FileText}
+                title="Scarica le domande aperte con le risposte attese (PDF)"
+              />
+              <DownloadButton
+                href={`/api/lessons/${lesson.id}/quiz-chiuse.csv`}
+                label="Domande Chiuse (CSV)"
+                enabled={!!lesson.closed_questions_available}
+                icon={ListChecks}
+                title="Scarica le domande a scelta multipla (CSV)"
+              />
+            </>
           )}
           <DownloadButton
             href={`/api/lessons/${lesson.id}/all.zip`}
