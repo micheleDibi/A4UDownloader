@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Award, Layers, User } from 'lucide-react';
+import { ArrowLeft, Award, GraduationCap, Layers, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { api } from '../api/client';
 import type { CourseDetail, ModuleDetail, ModuleSummary } from '../api/types';
@@ -77,6 +77,11 @@ export function CourseDetailPage() {
             {courseQuery.data.title || courseQuery.data.name}
           </h1>
           <div className="mt-3 flex flex-wrap gap-2">
+            {courseQuery.data.corso_di_laurea && (
+              <Chip icon={GraduationCap}>
+                {courseQuery.data.corso_di_laurea}
+              </Chip>
+            )}
             <Chip icon={User}>{courseQuery.data.instructor_name || '—'}</Chip>
             <Chip icon={Award}>{courseQuery.data.cfu ?? '—'} CFU</Chip>
             <Chip icon={Layers}>{sortedModules.length} moduli</Chip>

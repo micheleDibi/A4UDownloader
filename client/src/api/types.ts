@@ -8,6 +8,7 @@ export interface Course {
   duration_minutes?: number | null;
   is_completed: boolean;
   cfu?: number | null;
+  corso_di_laurea?: string | null;
   instructor_name?: string | null;
 }
 

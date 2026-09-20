@@ -35,6 +35,7 @@ const COURSE_SELECT = `
   SELECT c.id::text AS id,
          c.title,
          c.cfu,
+         c.corso_di_laurea,
          c.language_code,
          c.lesson_duration_minutes,
          u.full_name AS instructor_name,
@@ -62,6 +63,7 @@ interface CourseRow {
   id: string;
   title: string;
   cfu: number | null;
+  corso_di_laurea: string | null;
   language_code: string | null;
   lesson_duration_minutes: number | null;
   instructor_name: string | null;
@@ -79,6 +81,7 @@ function mapCourse(row: CourseRow): Course {
     name: row.title,
     title: row.title,
     cfu: row.cfu,
+    corso_di_laurea: row.corso_di_laurea,
     language: row.language_code,
     duration_minutes: duration,
     instructor_name: row.instructor_name,

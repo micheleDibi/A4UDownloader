@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Award, BookOpen, RotateCcw, Search, User } from 'lucide-react';
+import {
+  Award,
+  BookOpen,
+  GraduationCap,
+  RotateCcw,
+  Search,
+  User,
+} from 'lucide-react';
 import { api } from '../api/client';
 import type { Course } from '../api/types';
 import { Layout } from '../components/Layout';
@@ -22,6 +29,12 @@ function CourseCard({ course }: { course: Course }) {
       </h3>
 
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+        {course.corso_di_laurea && (
+          <span className="inline-flex items-center gap-1.5">
+            <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
+            {course.corso_di_laurea}
+          </span>
+        )}
         <span className="inline-flex items-center gap-1.5">
           <User className="h-3.5 w-3.5 text-slate-400" />
           {course.instructor_name || '—'}
@@ -61,7 +74,8 @@ export function CoursesPage() {
         !q ||
         (c.title ?? '').toLowerCase().includes(q) ||
         (c.name ?? '').toLowerCase().includes(q) ||
-        (c.instructor_name ?? '').toLowerCase().includes(q);
+        (c.instructor_name ?? '').toLowerCase().includes(q) ||
+        (c.corso_di_laurea ?? '').toLowerCase().includes(q);
       const matchInstructor = !instructor || c.instructor_name === instructor;
       return matchQuery && matchInstructor;
     });
@@ -91,7 +105,7 @@ export function CoursesPage() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="search"
-              placeholder="Cerca per titolo o docente…"
+              placeholder="Cerca per titolo, docente o corso di laurea…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
