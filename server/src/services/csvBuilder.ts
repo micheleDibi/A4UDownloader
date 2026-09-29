@@ -33,7 +33,7 @@ function stripOptionPrefixes(options: AssessmentMCOption[]): string[] {
 // Ordina le opzioni mettendo la corretta per prima, senza alterare l'ordine
 // relativo delle altre. Se `correct_option_id` non combacia con nessuna
 // opzione (dato corrotto a monte) l'ordine resta invariato e lo segnaliamo.
-function orderCorrectFirst(
+export function orderCorrectFirst(
   options: AssessmentMCOption[],
   correctOptionId: string
 ): { texts: string[]; found: boolean } {

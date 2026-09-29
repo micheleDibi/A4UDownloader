@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="9" uniqueCount="9"><si><t>N.B. Non cancellare le righe rosse</t></si><si><t>Nucleo [testo]</t></si><si><t>Nr Lezione [1,2,…,n]</t></si><si><t>Livello Conoscenze [1,2,3]</t></si><si><t>Testo Domanda [testo]</t></si><si><t>Risposta 1 (corretta)</t></si><si><t>Risposta 2 (sbagliata)</t></si><si><t>Risposta 3 (sbagliata)</t></si><si><t>Risposta 4 (sbagliata)</t></si></sst>

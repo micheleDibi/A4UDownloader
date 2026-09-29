@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { config } from '../config';
 import type {
+  AssessmentMCQuestion,
   Course,
   CourseDetail,
   Lesson,
@@ -219,6 +220,48 @@ export async function getModuleWithRecords(
     position: mod.position,
     lessons: lessonsRes.rows,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Domande chiuse del corso, modulo per modulo (paniere eCampus)
+// ---------------------------------------------------------------------------
+// Tutti i moduli in ordine, anche quelli senza verifica: la posizione del
+// modulo determina il numero di lezione nel paniere. Si leggono solo le
+// lezioni di verifica, non il `content_raw` (pesante) delle lezioni di
+// contenuto.
+export interface ModuleClosedQuestions {
+  id: string;
+  title: string;
+  questions: AssessmentMCQuestion[];
+}
+
+export async function getCourseClosedQuestions(
+  courseId: string
+): Promise<ModuleClosedQuestions[]> {
+  if (!isUuid(courseId)) return [];
+  const res = await pool.query<{
+    module_id: string;
+    module_title: string;
+    content_raw: LessonAssessmentContent | null;
+  }>(
+    `SELECT m.id::text AS module_id, m.title AS module_title, cl.content_raw
+     FROM course_module m
+     LEFT JOIN course_lesson cl
+       ON cl.module_id = m.id AND cl.is_assessment = true
+     WHERE m.course_id = $1
+     ORDER BY m.position, cl.position`,
+    [courseId]
+  );
+  const modules: ModuleClosedQuestions[] = [];
+  for (const row of res.rows) {
+    let mod = modules[modules.length - 1];
+    if (!mod || mod.id !== row.module_id) {
+      mod = { id: row.module_id, title: row.module_title, questions: [] };
+      modules.push(mod);
+    }
+    mod.questions.push(...(row.content_raw?.multiple_choice_questions ?? []));
+  }
+  return modules;
 }
 
 export async function getModuleDetail(id: string): Promise<ModuleDetail | null> {
