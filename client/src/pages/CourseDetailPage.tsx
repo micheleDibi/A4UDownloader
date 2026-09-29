@@ -1,10 +1,18 @@
 import { useMemo, type ReactNode } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Award, GraduationCap, Layers, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  Award,
+  FileSpreadsheet,
+  GraduationCap,
+  Layers,
+  User,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { api } from '../api/client';
 import type { CourseDetail, ModuleDetail, ModuleSummary } from '../api/types';
+import { DownloadButton } from '../components/DownloadButton';
 import { Layout } from '../components/Layout';
 import { Spinner } from '../components/Spinner';
 import { ModuleAccordion } from '../components/ModuleAccordion';
@@ -47,6 +55,11 @@ export function CourseDetailPage() {
     })),
   });
 
+  // Il paniere eCampus si scarica solo se almeno un modulo ha domande chiuse.
+  const hasClosedQuestions = moduleQueries.some((q) =>
+    q.data?.lessons.some((l) => l.closed_questions_available)
+  );
+
   return (
     <Layout>
       <div className="mb-4">
@@ -73,9 +86,18 @@ export function CourseDetailPage() {
 
       {courseQuery.data && (
         <>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
-            {courseQuery.data.title || courseQuery.data.name}
-          </h1>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-800">
+              {courseQuery.data.title || courseQuery.data.name}
+            </h1>
+            <DownloadButton
+              href={`/api/courses/${courseQuery.data.id}/paniere-ecampus.xlsx`}
+              label="Paniere eCampus (XLSX)"
+              enabled={hasClosedQuestions}
+              icon={FileSpreadsheet}
+              title="Scarica il paniere eCampus del corso: 10 domande chiuse a caso per modulo (XLSX)"
+            />
+          </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {courseQuery.data.corso_di_laurea && (
               <Chip icon={GraduationCap}>

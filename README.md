@@ -2,7 +2,7 @@
 
 > Web app per sfogliare e scaricare in massa i materiali didattici dei corsi prodotti con la piattaforma **a4u**.
 
-Niente più click manuali lezione per lezione: scarichi dispense (PDF), slide (PDF), discorso (PDF), video (MP4) e i quiz (CSV + PDF) — singolarmente, per intera lezione, o per intero modulo. Vengono mostrati **solo i corsi completi** (dispense e slide generate) di una specifica organizzazione.
+Niente più click manuali lezione per lezione: scarichi dispense (PDF), slide (PDF), discorso (PDF), video (MP4) e i quiz (CSV + PDF) — singolarmente, per intera lezione, o per intero modulo — più il paniere eCampus (XLSX) dell'intero corso. Vengono mostrati **solo i corsi completi** (dispense e slide generate) di una specifica organizzazione.
 
 ---
 
@@ -28,6 +28,10 @@ Per ogni **lezione di valutazione** (quiz):
 Per ogni **modulo**:
 
 - **ZIP del modulo** con sotto-cartelle ordinate (`01-titolo-lezione/`, `02-…/`)
+
+Per ogni **corso** con domande chiuse:
+
+- **Paniere eCampus (XLSX)** — un unico file sul modello `Modello paniere.xlsx` di eCampus: per ogni modulo **10 domande chiuse estratte a caso** dalla lezione di verifica (tutte, se sono meno di 10). Colonne: *Nucleo* = titolo del modulo, *Nr Lezione* = 8 × posizione del modulo (8, 16, 24, …), *Livello Conoscenze* = 1, *Testo Domanda*, *Risposta 1 (corretta)* e *Risposte 2-4 (sbagliate)*. A ogni download l'estrazione cambia. Il nome del file contiene titolo del corso, corso di laurea (se presente) e CFU
 
 Dentro ogni ZIP i file sono numerati in ordine: `01-dispensa.pdf`, `02-slides.pdf`, `03-discorso.pdf`, `04-video.mp4`, `05-video-avatar.mp4`.
 
@@ -124,11 +128,12 @@ A4UDownloader/
 │       ├── auth/                      # AuthContext + RequireAuth
 │       └── api/                       # fetch client + tipi
 └── server/                            # Express + TS
-    └── src/
-        ├── routes/                    # auth, courses, modules, lessons
-        ├── services/                  # db (PostgreSQL), media (OVH), zipBuilder, csvBuilder
-        ├── middleware/                # auth JWT, rate limit, error handler
-        └── utils/                     # slugify, contentDisposition, limit
+    ├── src/
+    │   ├── routes/                    # auth, courses, modules, lessons
+    │   ├── services/                  # db (PostgreSQL), media (OVH), zipBuilder, csvBuilder, pdfBuilder, xlsxBuilder
+    │   ├── middleware/                # auth JWT, rate limit, error handler
+    │   └── utils/                     # slugify, contentDisposition, limit
+    └── templates/paniere-ecampus/     # modello eCampus del paniere (xlsx scompattato)
 ```
 
 ### Flusso dati
@@ -137,7 +142,7 @@ A4UDownloader/
 2. Backend valida la sessione, poi interroga **direttamente il PostgreSQL di a4u** (sola lettura) per corsi/moduli/lezioni.
 3. Un corso compare **solo** se appartiene all'organizzazione configurata ed è **completo**: per ogni lezione non-assessment `pdf_status='ready'` (dispensa) e `slides_pdf_status='ready'` (slide); se le verifiche sono abilitate, ogni lezione assessment ha `content_status` pronto.
 4. I PDF vivono tutti sotto `generated_pdfs/{org}/{course}/` su `MEDIA_BASE_URL` e si distinguono per suffisso — `{lesson}.pdf` (dispensa), `{lesson}_slides.pdf` (slide), `{lesson}_speech.pdf` (discorso); i video stanno sotto `uploads/`. Vengono **proxati in streaming** dal backend, con un nome file leggibile.
-5. I due file del quiz sono **generati al volo** dai dati JSON (`content_raw`) della lezione di verifica: il CSV delle domande chiuse e il PDF delle domande aperte. Il PDF del quiz è l'**unico file prodotto da questa app** — tutti gli altri sono proxati da OVH.
+5. I due file del quiz sono **generati al volo** dai dati JSON (`content_raw`) della lezione di verifica: il CSV delle domande chiuse e il PDF delle domande aperte. Allo stesso modo il paniere eCampus (XLSX) riempie il modello in `server/templates/paniere-ecampus/` (il `Modello paniere.xlsx` scompattato, senza modifiche): si riscrivono solo le righe dati del foglio, stili e righe rosse restano quelli del modello. Questi sono gli **unici file prodotti da questa app** — tutti gli altri sono proxati da OVH.
 6. Per gli ZIP, `archiver` fa streaming dei file da OVH al client mentre l'archivio viene compresso al volo.
 
 ### Endpoint backend
@@ -151,6 +156,7 @@ Tutti protetti tranne `/health`, `/auth/login`, `/auth/logout`.
 | `GET /auth/me` | 200 se autenticato, 401 altrimenti |
 | `GET /api/courses` | Lista dei corsi **completi** dell'organizzazione configurata |
 | `GET /api/courses/:id` | Dettaglio corso con lista moduli (404 se non completo/non in org) |
+| `GET /api/courses/:id/paniere-ecampus.xlsx` | Paniere eCampus del corso: 10 domande chiuse a caso per modulo (404 se il corso non ha domande chiuse) |
 | `GET /api/modules/:id` | Dettaglio modulo con lista lezioni |
 | `GET /api/lessons/:id` | Dettaglio lezione (flag disponibilità + tipo) |
 | `GET /api/lessons/:id/pdf` | Dispensa PDF (stream proxy da OVH) |
